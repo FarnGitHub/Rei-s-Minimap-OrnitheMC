@@ -1,0 +1,14 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "reifnsk.minimap.mixin",
+	"compatibilityLevel": "JAVA_8",
+	"client": [
+		"MinecraftGetter",
+    "GameGuiMixin",
+    "GameGuiGetter"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

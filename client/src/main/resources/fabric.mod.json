@@ -1,0 +1,31 @@
+{
+	"schemaVersion": 1,
+	"id": "rei_minimap",
+	"version": "${version}",
+	"name": "Rei's Minimap",
+	"description": "A Port of Rei's Minimap to OrnitheMC",
+	"authors": [
+		"farnfarn02 (Port)",
+    "ReiFNSK (Original)"
+	],
+	"contact": {
+		"homepage": "https://example.com/",
+		"sources": "https://github.com/OrnitheMC/ornithe-template-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "reifnsk/minimap/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"init": [
+      "reifnsk.minimap.ReiMinimapInit"
+		]
+	},
+  "mixins": [
+    "rei_minimap_mixin.json"
+  ],
+	"depends": {
+		"fabricloader": ">=0.14.21",
+		"minecraft": "1.0.0-beta.7.3",
+		"osl-entrypoints": ">=0.4.0"
+	}
+}
