@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "rei_minimap",
-	"version": "${version}",
+	"version": "1.1",
 	"name": "Rei's Minimap",
 	"description": "A Port of Rei's Minimap to OrnitheMC",
 	"authors": [
