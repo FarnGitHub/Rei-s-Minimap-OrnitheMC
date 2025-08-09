@@ -9,17 +9,11 @@
     "ReiFNSK (Original)"
 	],
 	"contact": {
-		"homepage": "https://example.com/",
-		"sources": "https://github.com/OrnitheMC/ornithe-template-mod"
+		"sources": "https://github.com/FarnGitHub/Rei-s-Minimap-OrnitheMC"
 	},
 	"license": "CC0-1.0",
 	"icon": "reifnsk/minimap/icon.png",
 	"environment": "client",
-	"entrypoints": {
-		"init": [
-      "reifnsk.minimap.ReiMinimapInit"
-		]
-	},
   "mixins": [
     "rei_minimap_mixin.json"
   ],
