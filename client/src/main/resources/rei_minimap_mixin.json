@@ -6,6 +6,9 @@
 	"client": [
 		"MinecraftGetter",
     "GameGuiMixin",
+		    "ClientNetworkGetter",
+    "ConnectionGetter",
+    "PlayerClientMPGetter",
     "GameGuiGetter"
 	],
 	"injectors": {
