@@ -278,14 +278,14 @@ public class ReiMinimap implements Runnable {
 					this.waypointDimension = this.currentDimension;
 					if(me) {
 						this.chatTime = System.currentTimeMillis();
-						this.chatWelcomed = !this.multiplayer;
-						this.allowCavemap = !this.multiplayer;
-						this.allowEntitiesRadar = !this.multiplayer;
-						this.allowEntityPlayer = !this.multiplayer;
-						this.allowEntityAnimal = !this.multiplayer;
-						this.allowEntityMob = !this.multiplayer;
-						this.allowEntitySlime = !this.multiplayer;
-						this.allowEntitySquid = !this.multiplayer;
+						this.chatWelcomed = true;
+						this.allowCavemap = true;
+						this.allowEntitiesRadar = true;
+						this.allowEntityPlayer = true;
+						this.allowEntityAnimal = true;
+						this.allowEntityMob = true;
+						this.allowEntitySlime = true;
+						this.allowEntitySquid = true;
 						this.loadWaypoints();
 					}
 
@@ -297,85 +297,6 @@ public class ReiMinimap implements Runnable {
 				}
 
 				this.stripCounter.reset();
-			}
-
-			if(!this.chatWelcomed && System.currentTimeMillis() < this.chatTime + 10000L) {
-				Iterator iterator36 = this.chatLineList.iterator();
-
-				while(iterator36.hasNext()) {
-					ChatHudLine chatLine46 = (ChatHudLine) iterator36.next();
-					if(chatLine46 == null || this.chatLineLast == chatLine46) {
-						break;
-					}
-
-					Matcher matcher40 = Pattern.compile("\u00a70\u00a70((?:\u00a7[1-9a-d])+)\u00a7e\u00a7f").matcher(chatLine46.text);
-
-					while(matcher40.find()) {
-						this.chatWelcomed = true;
-						char[] c44 = matcher40.group(1).toCharArray();
-						x1 = c44.length;
-
-						for(i49 = 0; i49 < x1; ++i49) {
-							char c51 = c44[i49];
-							switch(c51) {
-							case '1':
-								this.allowCavemap = true;
-								break;
-							case '2':
-								this.allowEntityPlayer = true;
-								break;
-							case '3':
-								this.allowEntityAnimal = true;
-								break;
-							case '4':
-								this.allowEntityMob = true;
-								break;
-							case '5':
-								this.allowEntitySlime = true;
-								break;
-							case '6':
-								this.allowEntitySquid = true;
-							}
-						}
-					}
-				}
-
-				this.chatLineLast = this.chatLineList.isEmpty() ? null : (ChatHudLine) this.chatLineList.get(0);
-				if(this.chatWelcomed) {
-					this.allowEntitiesRadar = this.allowEntityPlayer || this.allowEntityAnimal || this.allowEntityMob || this.allowEntitySlime || this.allowEntitySquid;
-					if(this.allowCavemap) {
-						this.chatInfo("\u00a7E[Rei\'s Minimap] enabled: cavemapping.");
-					}
-
-					if(this.allowEntitiesRadar) {
-						StringBuilder stringBuilder37 = new StringBuilder("\u00a7E[Rei\'s Minimap] enabled: entities radar (");
-						if(this.allowEntityPlayer) {
-							stringBuilder37.append("Player, ");
-						}
-
-						if(this.allowEntityAnimal) {
-							stringBuilder37.append("Animal, ");
-						}
-
-						if(this.allowEntityMob) {
-							stringBuilder37.append("Mob, ");
-						}
-
-						if(this.allowEntitySlime) {
-							stringBuilder37.append("Slime, ");
-						}
-
-						if(this.allowEntitySquid) {
-							stringBuilder37.append("Squid, ");
-						}
-
-						stringBuilder37.setLength(stringBuilder37.length() - 2);
-						stringBuilder37.append(")");
-						this.chatInfo(stringBuilder37.toString());
-					}
-				}
-			} else {
-				this.chatWelcomed = true;
 			}
 
 			this.visibleEntitiesRadar = this.allowEntitiesRadar && this.configEntitiesRadar;
