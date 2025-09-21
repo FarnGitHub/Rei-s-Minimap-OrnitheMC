@@ -28,9 +28,8 @@ public enum EnumOptionValue {
 	X2_0(-1610547456, "x2.0"),
 	X4_0(-1610547456, "x4.0"),
 	X8_0(-1610547456, "x8.0"),
-	VERSION(-1610547456, "v1.8 OG, v1.0 STAPI"),
-	AUTHER(-1610547456, "ReiFNSK, farnfarn02"),
-	STAPIVERSION(-1610547456, "v1.0");
+	VERSION(-1610547456, "v1.2"),
+	AUTHER(-1610547456, "farnfarn02");
 
 	public final int color;
 	private final String text;

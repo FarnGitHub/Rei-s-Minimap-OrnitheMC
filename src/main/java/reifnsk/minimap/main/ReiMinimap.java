@@ -54,7 +54,7 @@ import reifnsk.minimap.mixin.accessor.PlayerClientMPGetter;
 import reifnsk.minimap.render.*;
 
 public class ReiMinimap implements Runnable {
-	public static final String version = String.format("%s [%s]", new Object[]{"v1.0", "StationAPI b1.7.3"});
+	public static final String version = String.format("%s [%s]", new Object[]{"v1.2", "StationAPI b1.7.3"});
 	public static final File directory = new File(Minecraft.getRunDirectory(), "mods" + File.separatorChar + "rei_minimap");
 	private float[] lightBrightnessTable = this.generateLightBrightnessTable(0.125F);
 	private static final int[] updateFrequencys = new int[]{2, 5, 10, 20, 40};
@@ -141,13 +141,6 @@ public class ReiMinimap implements Runnable {
 	private boolean configEntitySquid = true;
 	private boolean configEntitySlime = true;
 	private boolean configEntityDirection = false;
-	private boolean allowCavemap;
-	private boolean allowEntitiesRadar;
-	private boolean allowEntityPlayer;
-	private boolean allowEntityAnimal;
-	private boolean allowEntityMob;
-	private boolean allowEntitySquid;
-	private boolean allowEntitySlime;
 	private boolean visibleEntitiesRadar;
 	private boolean visibleEntityPlayer;
 	private boolean visibleEntityAnimal;
@@ -155,14 +148,6 @@ public class ReiMinimap implements Runnable {
 	private boolean visibleEntitySquid;
 	private boolean visibleEntitySlime;
 	static float[] temp = new float[10];
-
-	public boolean getAllowCavemap() {
-		return this.allowCavemap;
-	}
-
-	public boolean getAllowEntitiesRadar() {
-		return this.allowEntitiesRadar;
-	}
 
 	private ReiMinimap() {
 		this.theMinecraft = (Minecraft) FabricLoader.getInstance().getGameInstance();
@@ -279,13 +264,6 @@ public class ReiMinimap implements Runnable {
 					if(me) {
 						this.chatTime = System.currentTimeMillis();
 						this.chatWelcomed = true;
-						this.allowCavemap = true;
-						this.allowEntitiesRadar = true;
-						this.allowEntityPlayer = true;
-						this.allowEntityAnimal = true;
-						this.allowEntityMob = true;
-						this.allowEntitySlime = true;
-						this.allowEntitySquid = true;
 						this.loadWaypoints();
 					}
 
@@ -299,19 +277,12 @@ public class ReiMinimap implements Runnable {
 				this.stripCounter.reset();
 			}
 
-			this.visibleEntitiesRadar = this.allowEntitiesRadar && this.configEntitiesRadar;
-			boolean z10001;
-			if(this.allowEntityPlayer && this.configEntityPlayer) {
-				z10001 = true;
-			} else {
-				z10001 = false;
-			}
-
-			this.visibleEntityPlayer = z10001;
-			this.visibleEntityAnimal = this.allowEntityAnimal && this.configEntityAnimal;
-			this.visibleEntityMob = this.allowEntityMob && this.configEntityMob;
-			this.visibleEntitySlime = this.allowEntitySlime && this.configEntitySlime;
-			this.visibleEntitySquid = this.allowEntitySquid && this.configEntitySquid;
+			this.visibleEntitiesRadar = this.configEntitiesRadar;
+			this.visibleEntityPlayer = this.configEntityPlayer;
+			this.visibleEntityAnimal = this.configEntityAnimal;
+			this.visibleEntityMob = this.configEntityMob;
+			this.visibleEntitySlime = this.configEntitySlime;
+			this.visibleEntitySquid = this.configEntitySquid;
 			int i38 = this.theMinecraft.displayWidth;
 			int i48 = this.theMinecraft.displayHeight;
 			this.scaledResolution = new ScreenScaler(this.theMinecraft.options, i38, i48);
@@ -341,7 +312,7 @@ public class ReiMinimap implements Runnable {
 					this.forceUpdate = true;
 				}
 
-				if(this.allowCavemap && KeyInput.TOGGLE_CAVE_MAP.isKeyPush()) {
+				if(KeyInput.TOGGLE_CAVE_MAP.isKeyPush()) {
 					this.renderType = (this.renderType + 1) % 2;
 					this.stripCounter.reset();
 					this.forceUpdate = true;
@@ -367,7 +338,7 @@ public class ReiMinimap implements Runnable {
 					}
 				}
 
-				if(this.allowEntitiesRadar && KeyInput.TOGGLE_ENTITIES_RADAR.isKeyPush()) {
+				if(KeyInput.TOGGLE_ENTITIES_RADAR.isKeyPush()) {
 					this.configEntitiesRadar = !this.configEntitiesRadar;
 				}
 
@@ -647,7 +618,7 @@ public class ReiMinimap implements Runnable {
 				this.stripCountMax2 = (int)(d * d);
 			}
 
-			if(this.renderType == 1 && this.allowCavemap) {
+			if(this.renderType == 1) {
 				if(!this.forceUpdate && strip) {
 					this.caveCalcStrip();
 				} else {
@@ -791,7 +762,7 @@ public class ReiMinimap implements Runnable {
 		}
 	}
 
-	private static final byte ftob(float f) {
+	private static byte ftob(float f) {
 		return (byte)Math.max(0, Math.min(255, (int)(f * 255.0F)));
 	}
 
@@ -1116,14 +1087,31 @@ public class ReiMinimap implements Runnable {
 		GL11.glColor3f(1.0F, 1.0F, 1.0F);
 		double s2 = Math.sin(Math.toRadians((double)this.thePlayer.yaw)) * 28.0D;
 		c1 = Math.cos(Math.toRadians((double)this.thePlayer.yaw)) * 28.0D;
-		this.texture("%blur%/reifnsk/minimap/n.png");
-		this.drawCenteringRectangle((double)x + c1, (double)y - s2, 1.0D, 8.0D, 8.0D);
+		//this.texture("%blur%/reifnsk/minimap/n.png");
 		this.texture("%blur%/reifnsk/minimap/w.png");
-		this.drawCenteringRectangle((double)x - s2, (double)y - c1, 1.0D, 8.0D, 8.0D);
+		this.drawCenteringRectangle((double)x + c1, (double)y - s2, 1.0D, 8.0D, 8.0D);
+		//this.texture("%blur%/reifnsk/minimap/w.png");
 		this.texture("%blur%/reifnsk/minimap/s.png");
-		this.drawCenteringRectangle((double)x - c1, (double)y + s2, 1.0D, 8.0D, 8.0D);
+		this.drawCenteringRectangle((double)x - s2, (double)y - c1, 1.0D, 8.0D, 8.0D);
+		//this.texture("%blur%/reifnsk/minimap/s.png");
 		this.texture("%blur%/reifnsk/minimap/e.png");
+		this.drawCenteringRectangle((double)x - c1, (double)y + s2, 1.0D, 8.0D, 8.0D);
+		//this.texture("%blur%/reifnsk/minimap/e.png");
+		this.texture("%blur%/reifnsk/minimap/n.png");
 		this.drawCenteringRectangle((double)x + s2, (double)y + c1, 1.0D, 8.0D, 8.0D);
+
+		try {
+			GL11.glPushMatrix();
+			this.texture("%blur%/reifnsk/minimap/mmarrow.png");
+			GL11.glTranslated((double)x, (double)y, 0.0D);
+			GL11.glRotatef(0.0F, 0.0F, 0.0F, 1.0F);
+			GL11.glTranslated((double)(-x), (double)(-y), 0.0D);
+			this.drawCenteringRectangle((double)x, (double)y, 1.0D, 4.0D, 4.0D);
+		} catch (Exception exception43) {
+		} finally {
+			GL11.glPopMatrix();
+		}
+
 		GL11.glDepthMask(true);
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
 	}
@@ -1145,6 +1133,11 @@ public class ReiMinimap implements Runnable {
 		double slideY = (this.thePlayer.z - (double)this.lastZ) * 1.0D / 256D;
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, this.mapTransparency ? 0.7F : 1.0F);
 		this.texture.bind();
+
+		GL11.glTranslated(x, y, 0.0);
+		GL11.glRotatef(270.0F, 0.0F, 0.0F, 1.0F);
+		GL11.glTranslated(-x, -y, 0.0);
+
 		this.startDrawingQuads();
 		this.addVertexWithUV((double)(x - 32), (double)(y + 32), 1.0D, 0.5D + a + slideX, 0.5D + a + slideY);
 		this.addVertexWithUV((double)(x + 32), (double)(y + 32), 1.0D, 0.5D + a + slideX, 0.5D - a + slideY);
@@ -1243,6 +1236,9 @@ public class ReiMinimap implements Runnable {
 		}
 
 		GL11.glColor3f(1.0F, 1.0F, 1.0F);
+		GL11.glTranslated(x, y, 0.0);
+		GL11.glRotatef(90.0F, 0.0F, 0.0F, 1.0F);
+		GL11.glTranslated(-x, -y, 0.0);
 		this.texture("%blur%/reifnsk/minimap/n.png");
 		this.drawCenteringRectangle((double)x, (double)(y - 28), 1.0D, 8.0D, 8.0D);
 		this.texture("%blur%/reifnsk/minimap/s.png");
@@ -1256,7 +1252,7 @@ public class ReiMinimap implements Runnable {
 			GL11.glPushMatrix();
 			this.texture("%blur%/reifnsk/minimap/mmarrow.png");
 			GL11.glTranslated((double)x, (double)y, 0.0D);
-			GL11.glRotatef(this.thePlayer.yaw - 90.0F, 0.0F, 0.0F, 1.0F);
+			GL11.glRotatef(this.thePlayer.yaw - 180.0F, 0.0F, 0.0F, 1.0F);
 			GL11.glTranslated((double)(-x), (double)(-y), 0.0D);
 			this.drawCenteringRectangle((double)x, (double)y, 1.0D, 4.0D, 4.0D);
 		} catch (Exception exception43) {
@@ -1280,6 +1276,9 @@ public class ReiMinimap implements Runnable {
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 		this.texture.bind();
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, this.mapTransparency ? 0.7F : 1.0F);
+		GL11.glTranslated(centerX, centerY, 0.0);
+		GL11.glRotatef(270.0F, 0.0F, 0.0F, 1.0F);
+		GL11.glTranslated(-centerX, -centerY, 0.0);
 		this.startDrawingQuads();
 		this.addVertexWithUV(centerX - 120.0D, centerY + 120.0D, 1.0D, 0.96875D + slideX, 0.96875D + slideY);
 		this.addVertexWithUV(centerX + 120.0D, centerY + 120.0D, 1.0D, 0.96875D + slideX, 8.0D / 256D + slideY);
@@ -1330,6 +1329,9 @@ public class ReiMinimap implements Runnable {
 		}
 
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+		GL11.glTranslated(centerX, centerY, 0);
+		GL11.glRotatef(90, 0,0,1);
+		GL11.glTranslated(-centerX, -centerY, 0);
 		this.texture("%blur%/reifnsk/minimap/n.png");
 		this.drawCenteringRectangle(centerX, centerY - 104.0D, 1.0D, 16.0D, 16.0D);
 		this.texture("%blur%/reifnsk/minimap/s.png");
@@ -1343,7 +1345,7 @@ public class ReiMinimap implements Runnable {
 			GL11.glPushMatrix();
 			this.texture("%blur%/reifnsk/minimap/mmarrow.png");
 			GL11.glTranslated(centerX, centerY, 0.0D);
-			GL11.glRotatef(this.thePlayer.yaw - 90.0F, 0.0F, 0.0F, 1.0F);
+			GL11.glRotatef(this.thePlayer.yaw - 180.0F, 0.0F, 0.0F, 1.0F);
 			GL11.glTranslated(-centerX, -centerY, 0.0D);
 			this.drawCenteringRectangle(centerX, centerY, 1.0D, 8.0D, 8.0D);
 		} catch (Exception exception46) {

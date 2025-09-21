@@ -55,7 +55,7 @@ public class GuiOptionScreen extends Screen implements GuiScreenInterface {
 
 		for(int i$ = 0; i$ < button; ++i$) {
 			EnumOption eo = i[i$];
-			if(eo.getPage() == this.page && (!isMultiplayer() || (eo != EnumOption.RENDER_TYPE || ReiMinimap.instance.getAllowCavemap()) && (eo != EnumOption.ENTITIES_RADAR_OPTION || ReiMinimap.instance.getAllowEntitiesRadar()))) {
+			if(eo.getPage() == this.page) {
 				GuiOptionButton button1 = new GuiOptionButton(this.minecraft.textRenderer, eo);
 				button1.setValue(ReiMinimap.instance.getOption(eo));
 				this.buttons.add(button1);
