@@ -36,7 +36,8 @@ public enum EnumOption {
 	ABOUT_VERSION("Version", 4, new EnumOptionValue[]{EnumOptionValue.VERSION}),
 	ABOUT_AUTHER("Author", 4, new EnumOptionValue[]{EnumOptionValue.AUTHER}),
 	OG_FORUM("Original Forum", 4, new EnumOptionValue[]{EnumOptionValue.SUB_OPTION}),
-	GITHUB("STAPI Source", 4, new EnumOptionValue[]{EnumOptionValue.SUB_OPTION});
+	GITHUB("STAPI Source", 4, new EnumOptionValue[]{EnumOptionValue.SUB_OPTION}),
+	CHUNKGRID("Chunk Grid", 1, new EnumOptionValue[]{EnumOptionValue.ENABLE, EnumOptionValue.DISABLE});
 
 	public static final int maxPage;
 	private String name;

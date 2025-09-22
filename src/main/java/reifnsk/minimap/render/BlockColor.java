@@ -220,14 +220,7 @@ public class BlockColor {
 	}
 
 	static {
-		int heighestID = 256;
-		for(Block theBlock : BlockRegistry.INSTANCE.stream().toList()) {
-			int theBlockID = theBlock.id;
-			if(theBlockID > heighestID) {
-				heighestID = theBlock.id;
-			}
-		}
-		BLOCK_NUM = heighestID + 1;
+		BLOCK_NUM = Block.BLOCKS.length;
 		blockColors = Arrays.copyOf(blockColors , BLOCK_NUM * 16 + 1);
 		useMetadata = new boolean[BLOCK_NUM];
 
