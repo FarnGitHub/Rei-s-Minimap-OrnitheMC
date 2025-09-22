@@ -54,7 +54,8 @@ import reifnsk.minimap.mixin.accessor.PlayerClientMPGetter;
 import reifnsk.minimap.render.*;
 
 public class ReiMinimap implements Runnable {
-	public static final String version = String.format("%s [%s]", new Object[]{"v1.2", "StationAPI b1.7.3"});
+	public static final String rawVerison = "" + FabricLoader.getInstance().getModContainer("rei_minimap").get().getMetadata().getVersion();
+	public static final String version = String.format("%s [%s]", new Object[]{rawVerison, "StationAPI b1.7.3"});
 	public static final File directory = new File(Minecraft.getRunDirectory(), "mods" + File.separatorChar + "rei_minimap");
 	private float[] lightBrightnessTable = this.generateLightBrightnessTable(0.125F);
 	private static final int[] updateFrequencys = new int[]{2, 5, 10, 20, 40};

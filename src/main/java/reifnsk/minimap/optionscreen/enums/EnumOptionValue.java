@@ -1,5 +1,7 @@
 package reifnsk.minimap.optionscreen.enums;
 
+import reifnsk.minimap.main.ReiMinimap;
+
 public enum EnumOptionValue {
 	ENABLE(-1610547456),
 	DISABLE(-1593901056),
@@ -28,7 +30,7 @@ public enum EnumOptionValue {
 	X2_0(-1610547456, "x2.0"),
 	X4_0(-1610547456, "x4.0"),
 	X8_0(-1610547456, "x8.0"),
-	VERSION(-1610547456, "v1.2"),
+	VERSION(-1610547456, ReiMinimap.rawVerison),
 	AUTHER(-1610547456, "farnfarn02");
 
 	public final int color;
