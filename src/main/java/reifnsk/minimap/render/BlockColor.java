@@ -14,7 +14,7 @@ import net.modificationstation.stationapi.api.registry.BlockRegistry;
 import reifnsk.minimap.main.ReiMinimap;
 
 public class BlockColor {
-	private static int BLOCK_NUM = BlockRegistry.INSTANCE.size();
+	private static int BLOCK_NUM;
 	private static BlockColor[] blockColors = new BlockColor[BLOCK_NUM * 16 + 1];
 	private static boolean[] useMetadata = new boolean[BLOCK_NUM];
 	private static HashMap nameMap;
@@ -25,7 +25,6 @@ public class BlockColor {
 	public final float blue;
 
 	public static BlockColor getBlockColor(int id, int meta) {
-		checkBlockIDSize();
 		int ptr = id(id, meta);
 		if (ptr < 0 || ptr >= blockColors.length) return blockColors[0];
 
@@ -39,12 +38,10 @@ public class BlockColor {
 	}
 
 	public static boolean useMetadata(int id) {
-		checkBlockIDSize();
 		return useMetadata[id];
 	}
 
 	public static void calcUseMetadata() {
-		checkBlockIDSize();
 		Arrays.fill(useMetadata, false);
 
 		for(int id = 0; id < BLOCK_NUM; ++id) {
@@ -61,7 +58,6 @@ public class BlockColor {
 	}
 
 	private static final int id(String name, int metadata) {
-		checkBlockIDSize();
 		if (name == null) {
 			return BLOCK_NUM << 4;
 		} else {
@@ -91,7 +87,6 @@ public class BlockColor {
 	}
 
 	private static void loadBlockColor() {
-		checkBlockIDSize();
 		File file = new File(ReiMinimap.directory, "blockcolor.txt");
 		if(file.exists()) {
 			Scanner in = null;
@@ -225,7 +220,14 @@ public class BlockColor {
 	}
 
 	static {
-		BLOCK_NUM = BlockRegistry.INSTANCE.size();
+		int heighestID = 256;
+		for(Block theBlock : BlockRegistry.INSTANCE.stream().toList()) {
+			int theBlockID = theBlock.id;
+			if(theBlockID > heighestID) {
+				heighestID = theBlock.id;
+			}
+		}
+		BLOCK_NUM = heighestID + 1;
 		blockColors = Arrays.copyOf(blockColors , BLOCK_NUM * 16 + 1);
 		useMetadata = new boolean[BLOCK_NUM];
 
@@ -241,7 +243,6 @@ public class BlockColor {
 		}
 
 		nameMap = map;
-
 		blockColors[id(0, 0)] = new BlockColor(16711935);
 		blockColors[id(Block.STONE.id, 0)] = new BlockColor(-9934744);
 		blockColors[id(2, 0)] = new BlockColor(-9128886, TintType.GRASS);
@@ -513,28 +514,5 @@ public class BlockColor {
 		loadBlockColor();
 		saveBlockColor();
 		calcUseMetadata();
-	}
-
-	public static void checkBlockIDSize() {
-		if(BLOCK_NUM < BlockRegistry.INSTANCE.size()) {
-			BLOCK_NUM = BlockRegistry.INSTANCE.size();
-			BlockColor[] originalblockColors = blockColors;
-			blockColors = Arrays.copyOf(originalblockColors , BLOCK_NUM * 16 + 1);
-			boolean[] originaluseMetadata = useMetadata;
-			useMetadata = Arrays.copyOf(originaluseMetadata, BLOCK_NUM);
-
-			HashMap map = new HashMap();
-
-			for(int i = 0; i < BLOCK_NUM; ++i) {
-				if(BlockRegistry.INSTANCE.get(i) != null) {
-					String name = BlockRegistry.INSTANCE.get(i).getTranslationKey();
-					if(!map.containsKey(name)) {
-						map.put(name, i);
-					}
-				}
-			}
-
-			nameMap = map;
-		}
 	}
 }
