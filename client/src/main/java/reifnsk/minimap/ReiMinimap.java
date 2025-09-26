@@ -1482,7 +1482,7 @@ public class ReiMinimap implements Runnable {
 						if(d < 114.0D) {
 							GL11.glColor4f(pt.red, pt.green, pt.blue, (float)Math.min(1.0D, Math.max(0.4D, (d - 1.0D) * 0.5D)));
 							this.texture(Waypoint.FILE[pt.type]);
-							this.drawCenteringRectangle(centerX + newX, centerY - newY, 1.0D, 8.0D, 8.0D);
+							this.drawCenteringRectangle(centerX + newX, centerY + newY, 1.0D, 8.0D, 8.0D);
 							if(KeyInput.TOGGLE_ZOOM.isKeyDown() && pt.name != null && !pt.name.isEmpty()) {
 								GL11.glDisable(GL11.GL_TEXTURE_2D);
 								GL11.glColor4f(0.0F, 0.0F, 0.0F, 0.627451F);
@@ -1525,6 +1525,7 @@ public class ReiMinimap implements Runnable {
 		GL11.glDepthMask(true);
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
 	}
+
 
 
 	private void texture(String texture) {
