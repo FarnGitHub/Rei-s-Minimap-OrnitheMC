@@ -253,7 +253,6 @@ modrinth {
     projectId = project.modrinth_slug
     versionNumber = project.mod_version
     versionName = "${project.modrinth_version_name} ${project.mod_version}"
-    changelog = rootProject.file("CHANGELOG.md").text
     versionType = "release"
     uploadFile = remapJar
     gameVersions = ["b1.7.3"]
