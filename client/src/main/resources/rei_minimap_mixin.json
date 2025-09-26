@@ -6,7 +6,7 @@
 	"client": [
 		"MinecraftGetter",
     "GameGuiMixin",
-		    "ClientNetworkGetter",
+    "ClientNetworkGetter",
     "ConnectionGetter",
     "PlayerClientMPGetter",
     "GameGuiGetter"

@@ -24,7 +24,6 @@ public abstract class GameGuiMixin {
 		)
 	)
 	private void injectBeforeDebugOverlay(CallbackInfo ci) {
-		// Your custom rendering code here
 		ReiMinimap.instance.onTickInGame(minecraft);
 	}
 

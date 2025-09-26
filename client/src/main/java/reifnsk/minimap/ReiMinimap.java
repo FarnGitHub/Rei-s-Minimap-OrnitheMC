@@ -1102,7 +1102,7 @@ public class ReiMinimap implements Runnable {
 		GL11.glPopMatrix();
 		double distance;
 		if(this.visibleEntitiesRadar) {
-			List s = this.theWorld.globalEntities;
+			List s = this.theWorld.getEntities();
 			synchronized(s) {
 				Iterator c = s.iterator();
 
@@ -1200,14 +1200,31 @@ public class ReiMinimap implements Runnable {
 		GL11.glColor3f(1.0F, 1.0F, 1.0F);
 		double s2 = Math.sin(Math.toRadians((double)this.thePlayer.yaw)) * 28.0D;
 		c1 = Math.cos(Math.toRadians((double)this.thePlayer.yaw)) * 28.0D;
-		this.texture("%blur%/reifnsk/minimap/n.png");
-		this.drawCenteringRectangle((double)x + c1, (double)y - s2, 1.0D, 8.0D, 8.0D);
+		//this.texture("%blur%/reifnsk/minimap/n.png");
 		this.texture("%blur%/reifnsk/minimap/w.png");
-		this.drawCenteringRectangle((double)x - s2, (double)y - c1, 1.0D, 8.0D, 8.0D);
+		this.drawCenteringRectangle(x + c1, y - s2, 1.0D, 8.0D, 8.0D);
+		//this.texture("%blur%/reifnsk/minimap/w.png");
 		this.texture("%blur%/reifnsk/minimap/s.png");
-		this.drawCenteringRectangle((double)x - c1, (double)y + s2, 1.0D, 8.0D, 8.0D);
+		this.drawCenteringRectangle(x -s2, y - c1, 1.0D, 8.0D, 8.0D);
+		//this.texture("%blur%/reifnsk/minimap/s.png");
 		this.texture("%blur%/reifnsk/minimap/e.png");
+		this.drawCenteringRectangle((double)x - c1, (double)y + s2, 1.0D, 8.0D, 8.0D);
+		//this.texture("%blur%/reifnsk/minimap/e.png");
+		this.texture("%blur%/reifnsk/minimap/n.png");
 		this.drawCenteringRectangle((double)x + s2, (double)y + c1, 1.0D, 8.0D, 8.0D);
+
+		try {
+			GL11.glPushMatrix();
+			this.texture("%blur%/reifnsk/minimap/mmarrow.png");
+			GL11.glTranslated((double)x, (double)y, 0.0D);
+			GL11.glRotatef(0.0F, 0.0F, 0.0F, 1.0F);
+			GL11.glTranslated((double)(-x), (double)(-y), 0.0D);
+			this.drawCenteringRectangle((double)x, (double)y, 1.0D, 4.0D, 4.0D);
+		} catch (Exception exception43) {
+		} finally {
+			GL11.glPopMatrix();
+		}
+
 		GL11.glDepthMask(true);
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
 	}
@@ -1230,16 +1247,17 @@ public class ReiMinimap implements Runnable {
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, this.mapTransparency ? 0.7F : 1.0F);
 		this.texture.bind();
 		this.startDrawingQuads();
-		this.addVertexWithUV((double)(x - 32), (double)(y + 32), 1.0D, 0.5D + a + slideX, 0.5D + a + slideY);
-		this.addVertexWithUV((double)(x + 32), (double)(y + 32), 1.0D, 0.5D + a + slideX, 0.5D - a + slideY);
-		this.addVertexWithUV((double)(x + 32), (double)(y - 32), 1.0D, 0.5D - a + slideX, 0.5D - a + slideY);
-		this.addVertexWithUV((double)(x - 32), (double)(y - 32), 1.0D, 0.5D - a + slideX, 0.5D + a + slideY);
+		this.addVertexWithUV(x + 32.0D, y + 32.0D, 1.0D, 0.5D + a + slideX, 0.5D + a + slideY);
+		this.addVertexWithUV(x + 32.0D, y - 32.0D, 1.0D, 0.5D + a + slideX, 0.5D - a + slideY);
+		this.addVertexWithUV(x - 32.0D, y - 32.0D, 1.0D, 0.5D - a + slideX, 0.5D - a + slideY);
+		this.addVertexWithUV(x - 32.0D, y + 32.0D, 1.0D, 0.5D - a + slideX, 0.5D + a + slideY);
 		this.draw();
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 		double d;
 		double t;
 		if(this.visibleEntitiesRadar) {
-			List exception = this.theWorld.globalEntities;
+			List exception = this.theWorld.getEntities();
+			float drawRotate;
 			synchronized(exception) {
 				Iterator wayX = exception.iterator();
 
@@ -1256,20 +1274,28 @@ public class ReiMinimap implements Runnable {
 						try {
 							GL11.glPushMatrix();
 							if(t < 31.0D) {
+								drawRotate = (float)Math.min(1.0D, Math.max(0.5D, 1.0D - (this.thePlayer.shape.minY - entity.shape.minY) * 0.1D));
 								float hypot = (float)(wayZ >> 16 & 255) * 0.003921569F;
 								float g = (float)(wayZ >> 8 & 255) * 0.003921569F;
 								float b = (float)(wayZ & 255) * 0.003921569F;
 								float alpha = (float)Math.max((double)0.2F, 1.0D - Math.abs(this.thePlayer.y - entity.y) * 0.04D);
+								b *= drawRotate;
+								g *= drawRotate;
+								hypot *= drawRotate;
 								GL11.glColor4f(hypot, g, b, alpha);
+								float drawRotate1;
+								double drawX = -wayX1;
+								double drawY = -d;
+								drawRotate1 = entity.yaw + 180.0F;
 								if(this.configEntityDirection) {
-									GL11.glTranslated((double)x + d, (double)y - wayX1, 0.0D);
-									GL11.glRotatef(entity.yaw - 90.0F, 0.0F, 0.0F, 1.0F);
-									GL11.glTranslated((double)(-x) - d, (double)(-y) + wayX1, 0.0D);
+									GL11.glTranslated((double)x + drawX, (double)y + drawY, 0.0D);
+									GL11.glRotatef(drawRotate1, 0.0F, 0.0F, 1.0F);
+									GL11.glTranslated((double)(-x) - drawX, (double)(-y) - drawY, 0.0D);
 									this.texture("%blur%/reifnsk/minimap/entity2.png");
-									this.drawCenteringRectangle((double)x + d, (double)y - wayX1, 1.0D, 8.0D, 8.0D);
+									this.drawCenteringRectangle((double)x + drawX, (double)y + drawY, 1.0D, 8.0D, 8.0D);
 								} else {
 									this.texture("%blur%/reifnsk/minimap/entity.png");
-									this.drawCenteringRectangle((double)x + d, (double)y - wayX1, 1.0D, 8.0D, 8.0D);
+									this.drawCenteringRectangle((double)x + drawX, (double)y + drawY, 1.0D, 8.0D, 8.0D);
 								}
 							}
 						} finally {
@@ -1305,7 +1331,7 @@ public class ReiMinimap implements Runnable {
 						if(d < 31.0D) {
 							GL11.glColor4f(pt.red, pt.green, pt.blue, (float)Math.min(1.0D, Math.max(0.4D, (d - 1.0D) * 0.5D)));
 							this.texture(Waypoint.FILE[pt.type]);
-							this.drawCenteringRectangle((double)x + wayZ1, (double)y - wayX2, 1.0D, 8.0D, 8.0D);
+							this.drawCenteringRectangle((double)x - wayX2, (double)y - wayZ1, 1.0D, 8.0D, 8.0D);
 						} else {
 							t = 34.0D / d;
 							wayX2 *= t;
@@ -1340,7 +1366,7 @@ public class ReiMinimap implements Runnable {
 			GL11.glPushMatrix();
 			this.texture("%blur%/reifnsk/minimap/mmarrow.png");
 			GL11.glTranslated((double)x, (double)y, 0.0D);
-			GL11.glRotatef(this.thePlayer.yaw - 90.0F, 0.0F, 0.0F, 1.0F);
+			GL11.glRotatef(this.thePlayer.yaw - 180.0F, 0.0F, 0.0F, 1.0F);
 			GL11.glTranslated((double)(-x), (double)(-y), 0.0D);
 			this.drawCenteringRectangle((double)x, (double)y, 1.0D, 4.0D, 4.0D);
 		} catch (Exception exception43) {
@@ -1365,16 +1391,16 @@ public class ReiMinimap implements Runnable {
 		this.texture.bind();
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, this.mapTransparency ? 0.7F : 1.0F);
 		this.startDrawingQuads();
-		this.addVertexWithUV(centerX - 120.0D, centerY + 120.0D, 1.0D, 0.96875D + slideX, 0.96875D + slideY);
-		this.addVertexWithUV(centerX + 120.0D, centerY + 120.0D, 1.0D, 0.96875D + slideX, 8.0D / 256D + slideY);
-		this.addVertexWithUV(centerX + 120.0D, centerY - 120.0D, 1.0D, 8.0D / 256D + slideX, 8.0D / 256D + slideY);
-		this.addVertexWithUV(centerX - 120.0D, centerY - 120.0D, 1.0D, 8.0D / 256D + slideX, 0.96875D + slideY);
+		this.addVertexWithUV(centerX + 120.0D, centerY + 120.0D, 1.0D, 0.96875D + slideX, 0.96875D + slideY);
+		this.addVertexWithUV(centerX + 120.0D, centerY - 120.0D, 1.0D, 0.96875D + slideX, 8.0D / 256D + slideY);
+		this.addVertexWithUV(centerX - 120.0D, centerY - 120.0D, 1.0D, 8.0D / 256D + slideX, 8.0D / 256D + slideY);
+		this.addVertexWithUV(centerX - 120.0D, centerY + 120.0D, 1.0D, 8.0D / 256D + slideX, 0.96875D + slideY);
 		this.draw();
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 		double d;
 		double t;
 		if(this.visibleEntitiesRadar) {
-			List i$ = this.theWorld.globalEntities;
+			List i$ = this.theWorld.getEntities();
 			synchronized(i$) {
 				Iterator wayX = i$.iterator();
 
@@ -1394,15 +1420,18 @@ public class ReiMinimap implements Runnable {
 								float x2 = (float)(wayZ & 255) * 0.003921569F;
 								float y1 = (float)Math.max((double)0.2F, 1.0D - Math.abs(this.thePlayer.y - entity.y) * 0.04D);
 								GL11.glColor4f(hypot, x1, x2, y1);
+								double drawX = -wayX1;
+								double drawY = -d;
+								float drawRotate1 = entity.yaw - 180.0F;
 								if(this.configEntityDirection) {
-									GL11.glTranslated(centerX + d, centerY - wayX1, 0.0D);
-									GL11.glRotatef(entity.yaw - 90.0F, 0.0F, 0.0F, 1.0F);
-									GL11.glTranslated(-centerX - d, -centerY + wayX1, 0.0D);
+									GL11.glTranslated(centerX + drawX, centerY + drawY, 0.0D);
+									GL11.glRotatef(drawRotate1, 0.0F, 0.0F, 1.0F);
+									GL11.glTranslated(-centerX - drawX, -centerY - drawY, 0.0D);
 									this.texture("%blur%/reifnsk/minimap/entity2.png");
-									this.drawCenteringRectangle(centerX + d, centerY - wayX1, 1.0D, 8.0D, 8.0D);
+									this.drawCenteringRectangle(centerX + drawX, centerY + drawY, 1.0D, 8.0D, 8.0D);
 								} else {
 									this.texture("%blur%/reifnsk/minimap/entity.png");
-									this.drawCenteringRectangle(centerX + d, centerY - wayX1, 1.0D, 8.0D, 8.0D);
+									this.drawCenteringRectangle(centerX + drawX, centerY + drawY, 1.0D, 8.0D, 8.0D);
 								}
 							}
 						} finally {
@@ -1427,7 +1456,7 @@ public class ReiMinimap implements Runnable {
 			GL11.glPushMatrix();
 			this.texture("%blur%/reifnsk/minimap/mmarrow.png");
 			GL11.glTranslated(centerX, centerY, 0.0D);
-			GL11.glRotatef(this.thePlayer.yaw - 90.0F, 0.0F, 0.0F, 1.0F);
+			GL11.glRotatef(this.thePlayer.yaw - 180.0F, 0.0F, 0.0F, 1.0F);
 			GL11.glTranslated(-centerX, -centerY, 0.0D);
 			this.drawCenteringRectangle(centerX, centerY, 1.0D, 8.0D, 8.0D);
 		} catch (Exception exception46) {
@@ -1448,10 +1477,12 @@ public class ReiMinimap implements Runnable {
 
 					try {
 						GL11.glPushMatrix();
+						double newX = -wayX2;
+						double newY = -wayZ1;
 						if(d < 114.0D) {
 							GL11.glColor4f(pt.red, pt.green, pt.blue, (float)Math.min(1.0D, Math.max(0.4D, (d - 1.0D) * 0.5D)));
 							this.texture(Waypoint.FILE[pt.type]);
-							this.drawCenteringRectangle(centerX + wayZ1, centerY - wayX2, 1.0D, 8.0D, 8.0D);
+							this.drawCenteringRectangle(centerX + newX, centerY - newY, 1.0D, 8.0D, 8.0D);
 							if(KeyInput.TOGGLE_ZOOM.isKeyDown() && pt.name != null && !pt.name.isEmpty()) {
 								GL11.glDisable(GL11.GL_TEXTURE_2D);
 								GL11.glColor4f(0.0F, 0.0F, 0.0F, 0.627451F);
@@ -1494,6 +1525,7 @@ public class ReiMinimap implements Runnable {
 		GL11.glDepthMask(true);
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
 	}
+
 
 	private void texture(String texture) {
 		this.theMinecraft.textureManager.bind(this.theMinecraft.textureManager.load(texture));
