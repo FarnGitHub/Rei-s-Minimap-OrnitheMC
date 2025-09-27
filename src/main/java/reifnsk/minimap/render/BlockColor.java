@@ -7,11 +7,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Scanner;
 
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
 import net.minecraft.client.resource.language.TranslationStorage;
 import net.minecraft.item.ItemStack;
+import net.modificationstation.stationapi.api.mod.entrypoint.Entrypoint;
 import net.modificationstation.stationapi.api.registry.BlockRegistry;
+import net.modificationstation.stationapi.api.util.Identifier;
+import net.modificationstation.stationapi.api.util.Namespace;
 import reifnsk.minimap.main.ReiMinimap;
+import reifnsk.minimap.main.ReiMinimapStationAPI;
 
 public class BlockColor {
 	private static int BLOCK_NUM;
@@ -227,7 +232,7 @@ public class BlockColor {
 		HashMap map = new HashMap();
 
 		for(int i = 0; i < BLOCK_NUM; ++i) {
-			if(BlockRegistry.INSTANCE.get(i) != null) {
+			if(Block.BLOCKS[i] != null) {
 				String name = BlockRegistry.INSTANCE.get(i).getTranslationKey();
 				if(!map.containsKey(name)) {
 					map.put(name, i);
@@ -446,64 +451,6 @@ public class BlockColor {
 		blockColors[id(96, 5)] = new BlockColor(545152301);
 		blockColors[id(96, 6)] = new BlockColor(545152301);
 		blockColors[id(96, 7)] = new BlockColor(545152301);
-		blockColors[id("tile.AetherPortal", 0)] = new BlockColor(-1960157185);
-		blockColors[id("tile.AetherDirt", 0)] = new BlockColor(-10195342);
-		blockColors[id("tile.AetherGrass", 0)] = new BlockColor(-9329021);
-		blockColors[id("tile.Quicksoil", 0)] = new BlockColor(-3291524);
-		blockColors[id("tile.Holystone", 0)] = new BlockColor(-5855578);
-		blockColors[id("tile.Holystone", 2)] = new BlockColor(-6898026);
-		blockColors[id("tile.Icestone", 0)] = new BlockColor(-6380894);
-		blockColors[id("tile.Aercloud", 0)] = new BlockColor(-1594822416);
-		blockColors[id("tile.Aercloud", 1)] = new BlockColor(-1600085776);
-		blockColors[id("tile.Aercloud", 2)] = new BlockColor(-1594822496);
-		blockColors[id("tile.Aerogel", 0)] = new BlockColor(-1177628184);
-		blockColors[id("tile.Enchanter", 0)] = new BlockColor(-12105931);
-		blockColors[id("tile.Incubator", 0)] = new BlockColor(-12303052);
-		blockColors[id("tile.AetherLog", 0)] = new BlockColor(-11185605);
-		blockColors[id("tile.AetherPlank", 0)] = new BlockColor(-11448003);
-		blockColors[id("tile.SkyrootLeaves", 0)] = new BlockColor(1820962906);
-		blockColors[id("tile.GoldenLeaves", 0)] = new BlockColor(1823716673);
-		blockColors[id("tile.SkyrootSapling", 0)] = new BlockColor(1818653504);
-		blockColors[id("tile.GoldenOakSapling", 0)] = new BlockColor(1821147187);
-		blockColors[id("tile.AmbrosiumOre", 0)] = new BlockColor(-5921373);
-		blockColors[id("tile.AmbrosiumTorch", 0)] = new BlockColor(1626332928);
-		blockColors[id("tile.ZaniteOre", 0)] = new BlockColor(-6052956);
-		blockColors[id("tile.GravititeOre", 0)] = new BlockColor(-5987677);
-		blockColors[id("tile.EnchantedGravitite", 0)] = new BlockColor(-2263363);
-		blockColors[id("tile.Trap", 0)] = new BlockColor(-8487298);
-		blockColors[id("tile.Mimic", 0)] = new BlockColor(-7378659);
-		blockColors[id("tile.TreasureChest", 0)] = new BlockColor(-7569357);
-		blockColors[id("tile.DungeonStone", 0)] = new BlockColor(-8487298);
-		blockColors[id("tile.DungeonStone", 1)] = new BlockColor(-7177384);
-		blockColors[id("tile.DungeonStone", 2)] = new BlockColor(-8305089);
-		blockColors[id("tile.LightDungeonStone", 0)] = new BlockColor(-8487298);
-		blockColors[id("tile.LightDungeonStone", 1)] = new BlockColor(-6716576);
-		blockColors[id("tile.LightDungeonStone", 2)] = new BlockColor(-8371138);
-		blockColors[id("tile.LockedDungeonStone", 0)] = new BlockColor(-8487298);
-		blockColors[id("tile.LightLockedDungeonStone", 0)] = new BlockColor(-8487298);
-		blockColors[id("tile.Pillar", 0)] = new BlockColor(-1452088);
-		blockColors[id("tile.Pillar", 1)] = new BlockColor(-1452088);
-		blockColors[id("tile.ZaniteBlock", 0)] = new BlockColor(-7829280);
-		blockColors[id("tile.QuicksoilGlass", 0)] = new BlockColor(1623508018);
-		blockColors[id("tile.Freezer", 0)] = new BlockColor(-9408171);
-		blockColors[id("tile.White_Flower", 0)] = new BlockColor(-1058477848);
-		blockColors[id("tile.Purple_Flower", 0)] = new BlockColor(-1066451788);
-		blockColors[id("tile.AetherBed", 0)] = new BlockColor(-6339259);
-		blockColors[id("tile.AetherBed", 1)] = new BlockColor(-6339259);
-		blockColors[id("tile.AetherBed", 2)] = new BlockColor(-6339259);
-		blockColors[id("tile.AetherBed", 3)] = new BlockColor(-6339259);
-		blockColors[id("tile.AetherBed", 4)] = new BlockColor(-6339259);
-		blockColors[id("tile.AetherBed", 5)] = new BlockColor(-6339259);
-		blockColors[id("tile.AetherBed", 6)] = new BlockColor(-6339259);
-		blockColors[id("tile.AetherBed", 7)] = new BlockColor(-6339259);
-		blockColors[id("tile.AetherBed", 8)] = new BlockColor(-6397599);
-		blockColors[id("tile.AetherBed", 9)] = new BlockColor(-6397599);
-		blockColors[id("tile.AetherBed", 10)] = new BlockColor(-6397599);
-		blockColors[id("tile.AetherBed", 11)] = new BlockColor(-6397599);
-		blockColors[id("tile.AetherBed", 12)] = new BlockColor(-6397599);
-		blockColors[id("tile.AetherBed", 13)] = new BlockColor(-6397599);
-		blockColors[id("tile.AetherBed", 14)] = new BlockColor(-6397599);
-		blockColors[id("tile.AetherBed", 15)] = new BlockColor(-6397599);
 		loadBlockColor();
 		saveBlockColor();
 		calcUseMetadata();

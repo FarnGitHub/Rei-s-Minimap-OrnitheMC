@@ -1236,7 +1236,7 @@ public class ReiMinimap implements Runnable {
 							GL11.glColor3f(pt.red, pt.green, pt.blue);
 							this.texture(Waypoint.MARKER[pt.type]);
 							GL11.glTranslatef((float)x, (float)y, 0.0F);
-							GL11.glRotatef(-locate + 90.0F, 0.0F, 0.0F, 1.0F);
+							GL11.glRotatef(-locate, 0.0F, 0.0F, 1.0F);
 							GL11.glTranslatef((float)(-x), (float)(-y), 0.0F);
 							GL11.glTranslated(0.0D, -hypot1, 0.0D);
 							this.drawCenteringRectangle((double)x, (double)y, 1.0D, 8.0D, 8.0D);
@@ -1406,7 +1406,7 @@ public class ReiMinimap implements Runnable {
 							GL11.glColor3f(pt.red, pt.green, pt.blue);
 							this.texture(Waypoint.MARKER[pt.type]);
 							GL11.glTranslated(centerX, centerY, 0.0D);
-							GL11.glRotatef(-locate + 90.0F, 0.0F, 0.0F, 1.0F);
+							GL11.glRotatef(-locate, 0.0F, 0.0F, 1.0F);
 							GL11.glTranslated(-centerX, -centerY, 0.0D);
 							GL11.glTranslated(0.0D, -hypot2, 0.0D);
 							this.drawCenteringRectangle(centerX, centerY, 1.0D, 8.0D, 8.0D);
