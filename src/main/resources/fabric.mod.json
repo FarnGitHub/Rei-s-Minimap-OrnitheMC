@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "rei_minimap",
+  "version": "${version}",
+  "name": "Rei's Minimap",
+  "description": "A Port of Rei's Minimap to STAPI",
+  "authors": [
+    "farnfarn02 (Port)",
+    "ReiFNSK (Original)"
+  ],
+  "license": "MIT",
+  "icon": "reifnsk/minimap/reitextures/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "stationapi:event_bus_client": [
+      "reifnsk.minimap.stationapi.ReiMinimapStationAPI"
+    ],
+    "modmenu": [
+      "reifnsk.minimap.modmenu.ModMenuLinker"
+    ]
+  },
+  "mixins": [
+    "reiminimap.mixins.json"
+  ],
+  "order" : "last",
+  "depends": {
+    "minecraft": "1.0.0-beta.7.3",
+    "stationapi": ">=2.0.0-alpha.4"
+  }
+}
