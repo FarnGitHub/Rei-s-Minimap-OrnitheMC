@@ -26,4 +26,8 @@ public class WaypointEntity extends Entity {
 
 	protected void writeNbt(NbtCompound nBTTagCompound1) {
 	}
+
+	public boolean shouldRender(double distance) {
+		return true;
+	}
 }
