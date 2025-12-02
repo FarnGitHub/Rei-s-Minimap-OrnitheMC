@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 
+import net.danygames2014.unitweaks.util.ModOptions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.Tessellator;
@@ -12,13 +13,13 @@ import net.minecraft.client.render.entity.EntityRenderer;
 
 import net.minecraft.entity.Entity;
 import org.lwjgl.opengl.GL11;
+import reifnsk.minimap.stationapi.ReiMinimapStationAPI;
 
 public class WaypointEntityRender extends EntityRenderer {
 	static final ReiMinimap rm = ReiMinimap.instance;
 	final Minecraft mc;
 	double far = 1.0D;
 	double _d = 1.0D;
-	public static boolean isFrontView = false;
 
 	public WaypointEntityRender(Minecraft minecraft1) {
 		this.mc = minecraft1;
@@ -57,6 +58,13 @@ public class WaypointEntityRender extends EntityRenderer {
 		}
 	}
 
+	private static boolean isUniTweakThirdPersonView() {
+		if(ReiMinimapStationAPI.uniTweak) {
+			return ModOptions.frontView;
+		}
+		return false;
+	}
+
 	void draw(ViewWaypoint waypointEntityRender$ViewWaypoint1, float f2, float f3) {
 		float f4 = (float)Math.max(0.0D, 1.0D - waypointEntityRender$ViewWaypoint1.distance * this._d);
 		TextRenderer fontRenderer5 = this.getTextRenderer();
@@ -67,7 +75,7 @@ public class WaypointEntityRender extends EntityRenderer {
 		}
 
 		if(rm.getMarkerDistance()) {
-			if(stringBuilder6.length() != 0) {
+			if(!stringBuilder6.isEmpty()) {
 				stringBuilder6.append(" ");
 			}
 
@@ -78,8 +86,8 @@ public class WaypointEntityRender extends EntityRenderer {
 		double d8 = (waypointEntityRender$ViewWaypoint1.dl * 0.1D + 1.0D) * 0.02666666666666667D;
 		int i10 = rm.getMarkerIcon() ? -16 : 0;
 		GL11.glTranslated(waypointEntityRender$ViewWaypoint1.dx, waypointEntityRender$ViewWaypoint1.dy, waypointEntityRender$ViewWaypoint1.dz);
-		GL11.glRotatef(-this.dispatcher.yaw, 0.0F, 1.0F, 0.0F);
-		GL11.glRotatef(isFrontView ? -this.dispatcher.pitch : this.dispatcher.pitch, 1.0F, 0.0F, 0.0F);
+		GL11.glRotatef(-(this.dispatcher.yaw + (isUniTweakThirdPersonView() ? 180.0F : 0F)), 0.0F, 1.0F, 0.0F);
+		GL11.glRotatef(isUniTweakThirdPersonView() ? -this.dispatcher.pitch: this.dispatcher.pitch, 1.0F, 0.0F, 0.0F);
 		GL11.glScaled(-d8, -d8, d8);
 		GL11.glEnable(GL11.GL_BLEND);
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
@@ -136,9 +144,6 @@ public class WaypointEntityRender extends EntityRenderer {
 		GL11.glPopMatrix();
 	}
 
-	static EntityRenderDispatcher access$0(WaypointEntityRender waypointEntityRender0) {
-		return waypointEntityRender0.dispatcher;
-	}
 	class ViewWaypoint extends Waypoint implements Comparable {
 		double dx;
 		double dy;
