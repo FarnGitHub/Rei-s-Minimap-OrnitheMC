@@ -2129,6 +2129,7 @@ public class ReiMinimap implements Runnable {
 			}
 		}
 
+		GL11.glColor3f(1.0F, 1.0F, 1.0F);
 		GLTexture.N.bind();
 		this.drawCenteringRectangle(0.0D, -28.0D, 1.0D, 8.0D, 8.0D);
 		GLTexture.S.bind();
