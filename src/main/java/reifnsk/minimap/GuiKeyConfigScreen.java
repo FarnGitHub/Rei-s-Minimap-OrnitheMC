@@ -25,7 +25,7 @@ public class GuiKeyConfigScreen extends Screen implements GuiScreenInterface {
 
 	}
 
-	public void initGui() {
+	public void init() {
 		int i1 = this.calcLabelWidth();
 		int i2 = this.calcButtonWidth();
 		this.left = (this.width - i1 - i2 - 12) / 2;
@@ -121,7 +121,7 @@ public class GuiKeyConfigScreen extends Screen implements GuiScreenInterface {
 			}
 
 			this.buttons.clear();
-			this.initGui();
+			this.init();
 		}
 
 		if(guiButton1 == this.cancelButton) {
@@ -141,7 +141,7 @@ public class GuiKeyConfigScreen extends Screen implements GuiScreenInterface {
 			this.edit.getKeyInput().setKey(i2);
 			this.edit = null;
 			this.buttons.clear();
-			this.initGui();
+			this.init();
 		} else if(i2 == 1) {
 			KeyInput[] keyInput3 = KeyInput.values();
 
