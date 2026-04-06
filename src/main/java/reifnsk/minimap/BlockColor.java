@@ -377,6 +377,10 @@ public final class BlockColor {
 	}
 
 	public static BlockColor getBlockColor(int i0, int i1) {
+		BlockColor theColor = blockColor[pointer(i0, i1)];
+		if(theColor == null) {
+			setDefaultColor(i0, i1, Block.BLOCKS[i0].material.mapColor.color);
+		}
 		return blockColor[pointer(i0, i1)];
 	}
 
