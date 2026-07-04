@@ -3,10 +3,8 @@ package reifnsk.minimap;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import javax.imageio.ImageIO;
 
 import net.minecraft.block.Block;
@@ -18,16 +16,16 @@ import net.minecraft.client.resource.pack.TexturePack;
 import net.minecraft.client.resource.pack.TexturePacks;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.biome.source.BiomeSource;
+import net.modificationstation.stationapi.api.client.texture.NativeImage;
+import net.modificationstation.stationapi.api.client.texture.Sprite;
 
+@SuppressWarnings({"unused", "SameParameterValue"})
 public final class BlockColor {
-	private static final ArrayList list = new ArrayList();
-	private static final float d = 0.003921569F;
-	private static final int AIR_COLOR = 16711935;
+	private static final ArrayList<BlockColor> list = new ArrayList<>();
 	private static final BlockColor AIR_BLOCK = instance(16711935);
 	private static final int BLOCK_NUM = Block.BLOCKS.length;
 	private static final BlockColor[] defaultColor = new BlockColor[BLOCK_NUM * 16 + 1];
 	private static final BlockColor[] textureColor = new BlockColor[BLOCK_NUM * 16 + 1];
-	private static final BlockColor[] userColor = new BlockColor[BLOCK_NUM * 16 + 1];
 	private static final BlockColor[] blockColor = new BlockColor[BLOCK_NUM * 16 + 1];
 	private static final boolean[] opaqueList = new boolean[BLOCK_NUM];
 	private static final boolean[] useMetadata = new boolean[BLOCK_NUM];
@@ -39,7 +37,7 @@ public final class BlockColor {
 	public final float blue;
 
 	static {
-		boolean z1 = false;
+		boolean z1;
 		Arrays.fill(defaultColor, AIR_BLOCK);
 		setDefaultColor(1, 0, -9934744);
 		setDefaultColor(2, 0, -12096451);
@@ -329,14 +327,13 @@ public final class BlockColor {
 		Arrays.fill(useMetadata, false);
 
 		for(int i1 = 0; i1 < BLOCK_NUM; ++i1) {
-			BlockColor[] blockColor2 = (BlockColor[])null;
+			BlockColor[] blockColor2 = null;
 			BlockColor blockColor3 = null;
-			BlockColor[][] blockColor7 = blockColor0;
 			int i6 = blockColor0.length;
 
 			int i5;
 			for(i5 = 0; i5 < i6; ++i5) {
-				BlockColor[] blockColor4 = blockColor7[i5];
+				BlockColor[] blockColor4 = blockColor0[i5];
 				if(blockColor4[i1 << 4] != null) {
 					blockColor2 = blockColor4;
 					blockColor3 = blockColor4[i1 << 4];
@@ -361,7 +358,7 @@ public final class BlockColor {
 	}
 
 	public static void calcBlockColorTD() {
-		calcBlockColor(new BlockColor[][]{textureColor, defaultColor});
+		calcBlockColor(textureColor, defaultColor);
 	}
 
 	public static void calcBlockColorD() {
@@ -395,7 +392,7 @@ public final class BlockColor {
 			list.add(blockColor2);
 			return blockColor2;
 		} else {
-			return (BlockColor)list.get(i3);
+			return list.get(i3);
 		}
 	}
 
@@ -442,45 +439,32 @@ public final class BlockColor {
 	}
 
 	public static void textureColorUpdate() {
-		Minecraft minecraft0 = ReiMinimap.instance.theMinecraft;
-		TexturePacks texturePackList1 = minecraft0.texturePacks;
-		TexturePack texturePackBase2 = texturePackList1.selected;
-		HashMap hashMap3 = new HashMap();
-		BufferedImage[] bufferedImage4 = splitImage(readImage(texturePackBase2, "/terrain.png"));
-		hashMap3.put((Object)null, bufferedImage4);
+		Minecraft mc = ReiMinimap.instance.theMinecraft;
+		TexturePacks pack = mc.texturePacks;
+		TexturePack texture = pack.selected;
 		Arrays.fill(textureColor, AIR_BLOCK);
-		TempBlockAccess blockColor$TempBlockAccess44 = new TempBlockAccess((TempBlockAccess)null);
+		TempBlockAccess access = new TempBlockAccess();
 		int i45 = 0;
 		boolean z5 = false;
 		boolean z6 = false;
 
 		for(int i46 = BLOCK_NUM; i45 < i46; ++i45) {
-			Block block48 = Block.BLOCKS[i45];
-			if(block48 != null) {
-				blockColor$TempBlockAccess44.a = i45;
-				String string50 = getBlockTexture(block48);
-				bufferedImage4 = (BufferedImage[])hashMap3.get(string50);
-				if(bufferedImage4 == null) {
-					bufferedImage4 = splitImage(readImage(texturePackBase2, string50));
-					hashMap3.put(string50, bufferedImage4);
-				}
+			Block block = Block.BLOCKS[i45];
+			if(block != null) {
+				access.blockId = i45;
+				BufferedImage[] buffer = getBlockImage(block);
 
-				int i52 = block48.getRenderType();
+				int i52 = block.getRenderType();
 
 				for(int i13 = 0; i13 < 16; ++i13) {
 					try {
-						boolean z14 = block48 instanceof TorchBlock;
-						int i15 = block48.getTexture(z14 ? 0 : 1, i13);
-						if(i45 == 18) {
-							i15 &= -2;
-						}
-
-						blockColor$TempBlockAccess44.f = i13;
-						block48.updateBoundingBox(blockColor$TempBlockAccess44, 0, 0, 0);
-						double d16 = block48.minX;
-						double d18 = block48.minZ;
-						double d20 = block48.maxX;
-						double d22 = block48.maxZ;
+						boolean z14 = block instanceof TorchBlock;
+						access.meta = i13;
+						block.updateBoundingBox(access, 0, 0, 0);
+						double d16 = block.minX;
+						double d18 = block.minZ;
+						double d20 = block.maxX;
+						double d22 = block.maxZ;
 						int i24;
 						int i25;
 						int i26;
@@ -490,18 +474,18 @@ public final class BlockColor {
 						int i30;
 						switch(i52) {
 						case 0:
-							setTextureColor(i45, i13, calcColorInt(bufferedImage4[i15], d16, d18, d20, d22));
+							setTextureColor(i45, i13, calcColorInt(buffer[i13], d16, d18, d20, d22));
 							break;
 						case 1:
-							i24 = calcColorInt(bufferedImage4[i15], d16, d18, d20, d22);
+							i24 = calcColorInt(buffer[i13], d16, d18, d20, d22);
 							if((i24 & 0xFF000000) != 0) {
 								i25 = Math.max(i24 >>> 24, 48) << 24;
 								setTextureColor(i45, i13, i24 & 0xFFFFFF | i25);
 							}
 							break;
 						case 2:
-							i30 = calcColorInt(bufferedImage4[i15], 0.4375D, 0.4375D, 0.5625D, 0.5625D);
-							int i31 = calcColorInt(bufferedImage4[i15], 0.375D, 0.375D, 0.625D, 0.625D);
+							i30 = calcColorInt(buffer[i13], 0.4375D, 0.4375D, 0.5625D, 0.5625D);
+							int i31 = calcColorInt(buffer[i13], 0.375D, 0.375D, 0.625D, 0.625D);
 							i24 = i30 >> 24 & 255;
 							i25 = i31 >> 24 & 255;
 							i26 = i24 + i25;
@@ -512,8 +496,8 @@ public final class BlockColor {
 								setTextureColor(i45, i13, Integer.MIN_VALUE | i27 << 16 | i28 << 8 | i29);
 								break;
 							} else {
-								i30 = calcColorInt(bufferedImage4[i15], 0.25D, 0.25D, 0.75D, 0.75D);
-								i31 = calcColorInt(bufferedImage4[i15], 0.0D, 0.0D, 1.0D, 1.0D);
+								i30 = calcColorInt(buffer[i13], 0.25D, 0.25D, 0.75D, 0.75D);
+								i31 = calcColorInt(buffer[i13], 0.0D, 0.0D, 1.0D, 1.0D);
 								i24 = i30 >> 24 & 255;
 								i25 = i31 >> 24 & 255;
 								i26 = i24 + i25;
@@ -526,19 +510,19 @@ public final class BlockColor {
 								}
 							}
 						case 3:
-							setTextureColor(i45, i13, calcColorInt(bufferedImage4[i15], d16, d18, d20, d22));
+							setTextureColor(i45, i13, calcColorInt(buffer[i13], d16, d18, d20, d22));
 							break;
 						case 4:
-							BufferedImage bufferedImage56 = bufferedImage4[i15];
+							BufferedImage bufferedImage56 = buffer[i13];
 							if(i45 == 8 || i45 == 9) {
-								bufferedImage4[i15] = new BufferedImage(1, 1, 2);
-								bufferedImage4[i15].setRGB(0, 0, -1960157441);
+								buffer[i13] = new BufferedImage(1, 1, 2);
+								buffer[i13].setRGB(0, 0, -1960157441);
 								z5 = true;
 							}
 
 							if(i45 == 10 || i45 == 11) {
-								bufferedImage4[i15] = new BufferedImage(1, 1, 2);
-								bufferedImage4[i15].setRGB(0, 0, -2530028);
+								buffer[i13] = new BufferedImage(1, 1, 2);
+								buffer[i13].setRGB(0, 0, -2530028);
 								z5 = true;
 							}
 
@@ -558,7 +542,7 @@ public final class BlockColor {
 							break;
 						case 5:
 							float f53 = (float)i13 / 15.0F;
-							i25 = calcColorInt(bufferedImage4[i15], d16, d18, d20, d22);
+							i25 = calcColorInt(buffer[i13], d16, d18, d20, d22);
 							if((i25 & 0xFF000000) != 0) {
 								i26 = Math.max(i25 >> 24 & 255, 108);
 								i27 = (int)((float)(i25 >> 16 & 255) * Math.max(0.3F, f53 * 0.6F + 0.4F));
@@ -567,72 +551,72 @@ public final class BlockColor {
 							}
 							break;
 						case 6:
-							i24 = calcColorInt(bufferedImage4[i15], d16, d18, d20, d22);
+							i24 = calcColorInt(buffer[i13], d16, d18, d20, d22);
 							if((i24 & 0xFF000000) != 0) {
 								i25 = Math.max(i24 >>> 24, 32) << 24;
 								setTextureColor(i45, i13, i24 & 0xFFFFFF | i25);
 							}
 							break;
 						case 7:
-							setTextureColor(i45, i13, calcColorInt(bufferedImage4[i15], d16, d18, d20, d22));
+							setTextureColor(i45, i13, calcColorInt(buffer[i13], d16, d18, d20, d22));
 							break;
 						case 8:
-							i24 = calcColorInt(bufferedImage4[i15], d16, d18, d20, d22);
+							i24 = calcColorInt(buffer[i13], d16, d18, d20, d22);
 							if((i24 & 0xFF000000) != 0) {
 								i25 = Math.min(i24 >>> 24, 40) << 24;
 								setTextureColor(i45, i13, i24 & 0xFFFFFF | i25);
 							}
 							break;
 						case 9:
-							setTextureColor(i45, i13, calcColorInt(bufferedImage4[i15], d16, d18, d20, d22));
+							setTextureColor(i45, i13, calcColorInt(buffer[i13], d16, d18, d20, d22));
 							break;
 						case 10:
-							setTextureColor(i45, i13, calcColorInt(bufferedImage4[i15], d16, d18, d20, d22));
+							setTextureColor(i45, i13, calcColorInt(buffer[i13], d16, d18, d20, d22));
 							break;
 						case 11:
-							i24 = calcColorInt(bufferedImage4[i15], d16, d18, d20, d22);
+							i24 = calcColorInt(buffer[i13], d16, d18, d20, d22);
 							if((i24 & 0xFF000000) != 0) {
 								i25 = Math.min(i24 >>> 24, 96) << 24;
 								setTextureColor(i45, i13, i24 & 0xFFFFFF | i25);
 							}
 							break;
 						case 12:
-							setTextureColor(i45, i13, calcColorInt(bufferedImage4[i15], d16, d18, d20, d22));
+							setTextureColor(i45, i13, calcColorInt(buffer[i13], d16, d18, d20, d22));
 							break;
 						case 13:
-							setTextureColor(i45, i13, calcColorInt(bufferedImage4[i15], d16, d18, d20, d22));
+							setTextureColor(i45, i13, calcColorInt(buffer[i13], d16, d18, d20, d22));
 							break;
 						case 14:
-							setTextureColor(i45, i13, calcColorInt(bufferedImage4[i15], d16, d18, d20, d22));
+							setTextureColor(i45, i13, calcColorInt(buffer[i13], d16, d18, d20, d22));
 							break;
 						case 15:
-							setTextureColor(i45, i13, calcColorInt(bufferedImage4[i15], d16, d18, d20, d22));
+							setTextureColor(i45, i13, calcColorInt(buffer[i13], d16, d18, d20, d22));
 							break;
 						case 16:
 							if(i13 >= 10 && i13 <= 13) {
-								setTextureColor(i45, i13, calcColorInt(bufferedImage4[i15], 0.0D, 0.25D, 1.0D, 1.0D));
+								setTextureColor(i45, i13, calcColorInt(buffer[i13], 0.0D, 0.25D, 1.0D, 1.0D));
 								break;
 							}
 
-							setTextureColor(i45, i13, calcColorInt(bufferedImage4[i15], d16, d18, d20, d22));
+							setTextureColor(i45, i13, calcColorInt(buffer[i13], d16, d18, d20, d22));
 							break;
 						case 17:
 							if((i13 & 7) != 0 && (i13 & 7) != 1) {
-								setTextureColor(i45, i13, calcColorInt(bufferedImage4[i15], 0.0D, 0.0D, 1.0D, 0.25D));
+								setTextureColor(i45, i13, calcColorInt(buffer[i13], 0.0D, 0.0D, 1.0D, 0.25D));
 								break;
 							}
 
-							setTextureColor(i45, i13, calcColorInt(bufferedImage4[i15], d16, d18, d20, d22));
+							setTextureColor(i45, i13, calcColorInt(buffer[i13], d16, d18, d20, d22));
 							break;
 						case 18:
-							i24 = calcColorInt(bufferedImage4[i15], d16, d18, d20, d22);
+							i24 = calcColorInt(buffer[i13], d16, d18, d20, d22);
 							if((i24 & 0xFF000000) != 0) {
 								i25 = Math.min(i24 >>> 24, 40) << 24;
 								setTextureColor(i45, i13, i24 & 0xFFFFFF | i25);
 							}
 							break;
 						case 19:
-							i24 = calcColorInt(bufferedImage4[i15], d16, d18, d20, d22);
+							i24 = calcColorInt(buffer[i13], d16, d18, d20, d22);
 							if((i24 & 0xFF000000) != 0) {
 								i25 = Math.max(48, i24 >> 24 & 255);
 								i26 = Math.min(255, Math.max(0, i13 * 32 * (i24 >> 16 & 255) / 255));
@@ -642,24 +626,24 @@ public final class BlockColor {
 							}
 							break;
 						case 20:
-							i24 = calcColorInt(bufferedImage4[i15], 0.0D, 0.0D, 1.0D, 1.0D);
+							i24 = calcColorInt(buffer[i13], 0.0D, 0.0D, 1.0D, 1.0D);
 							if((i24 & 0xFF000000) != 0) {
 								i25 = Math.min(i24 >>> 24, 32) << 24;
 								setTextureColor(i45, i13, i24 & 0xFFFFFF | i25);
 							}
 							break;
 						case 21:
-							i24 = calcColorInt(bufferedImage4[i15], 0.0D, 0.0D, 1.0D, 1.0D);
+							i24 = calcColorInt(buffer[i13], 0.0D, 0.0D, 1.0D, 1.0D);
 							if((i24 & 0xFF000000) != 0) {
 								i25 = Math.min(i24 >>> 24, 128) << 24;
 								setTextureColor(i45, i13, i24 & 0xFFFFFF | i25);
 							}
 							break;
 						case 22:
-							setTextureColor(i45, i13, calcColorInt(bufferedImage4[i15], d16, d18, d20, d22));
+							setTextureColor(i45, i13, calcColorInt(buffer[i13], d16, d18, d20, d22));
 							break;
 						case 23:
-							i24 = calcColorInt(bufferedImage4[i15], d16, d18, d20, d22);
+							i24 = calcColorInt(buffer[i13], d16, d18, d20, d22);
 							if((i24 & 0xFF000000) != 0) {
 								i25 = i24 >> 24 & 255;
 								i26 = (int)((float)((i24 >> 16 & 255) * 32) * 0.003921569F);
@@ -669,10 +653,10 @@ public final class BlockColor {
 							}
 							break;
 						case 24:
-							setTextureColor(i45, i13, calcColorInt(bufferedImage4[i15], d16, d18, d20, d22));
+							setTextureColor(i45, i13, calcColorInt(buffer[i13], d16, d18, d20, d22));
 							break;
 						default:
-							setTextureColor(i45, i13, calcColorInt(bufferedImage4[i15], d16, d18, d20, d22));
+							setTextureColor(i45, i13, calcColorInt(buffer[i13], d16, d18, d20, d22));
 						}
 					} catch (Exception exception42) {
 					}
@@ -776,23 +760,23 @@ public final class BlockColor {
 	}
 
 	private static BufferedImage readImage(TexturePack texturePackBase0, String string1) {
-		InputStream inputStream2 = null;
+		InputStream stream = null;
 
 		label87: {
 			BufferedImage bufferedImage4;
 			try {
-				inputStream2 = texturePackBase0.getResource(string1);
-				if(inputStream2 == null) {
+				stream = texturePackBase0.getResource(string1);
+				if(stream == null) {
 					break label87;
 				}
 
-				bufferedImage4 = ImageIO.read(inputStream2);
+				bufferedImage4 = ImageIO.read(stream);
 			} catch (IOException iOException12) {
 				break label87;
 			} finally {
-				if(inputStream2 != null) {
+				if(stream != null) {
 					try {
-						inputStream2.close();
+						stream.close();
 					} catch (IOException iOException11) {
 					}
 				}
@@ -807,39 +791,11 @@ public final class BlockColor {
 		return bufferedImage3;
 	}
 
-	private static BufferedImage[] splitImage(BufferedImage bufferedImage0) {
-		if(bufferedImage0 == null) {
-			bufferedImage0 = new BufferedImage(1, 1, 2);
-			bufferedImage0.setRGB(0, 0, 16711935);
-			BufferedImage[] bufferedImage9 = new BufferedImage[256];
-			Arrays.fill(bufferedImage9, bufferedImage0);
-			return bufferedImage9;
-		} else {
-			int i1 = Math.max(1, bufferedImage0.getWidth() >> 4);
-			int i2 = Math.max(1, bufferedImage0.getHeight() >> 4);
-			BufferedImage[] bufferedImage3 = new BufferedImage[256];
-
-			for(int i4 = 0; i4 < 256; ++i4) {
-				bufferedImage3[i4] = GLTextureBufferedImage.create(i1, i2);
-				int i5 = (i4 & 15) * bufferedImage0.getWidth() >> 4;
-				int i6 = (i4 >> 4) * bufferedImage0.getHeight() >> 4;
-
-				for(int i7 = 0; i7 < i2; ++i7) {
-					for(int i8 = 0; i8 < i1; ++i8) {
-						bufferedImage3[i4].setRGB(i8, i7, bufferedImage0.getRGB(i8 + i5, i7 + i6));
-					}
-				}
-			}
-
-			return bufferedImage3;
-		}
-	}
-
-	private static int calcColorInt(BufferedImage bufferedImage0, double d1, double d3, double d5, double d7) {
-		int i9 = (int)Math.floor((double)bufferedImage0.getWidth() * d1);
-		int i10 = (int)Math.floor((double)bufferedImage0.getHeight() * d3);
-		int i11 = (int)Math.floor((double)bufferedImage0.getWidth() * d5);
-		int i12 = (int)Math.floor((double)bufferedImage0.getHeight() * d7);
+	private static int calcColorInt(BufferedImage image, double d1, double d3, double d5, double d7) {
+		int i9 = (int)Math.floor((double)image.getWidth() * d1);
+		int i10 = (int)Math.floor((double)image.getHeight() * d3);
+		int i11 = (int)Math.floor((double)image.getWidth() * d5);
+		int i12 = (int)Math.floor((double)image.getHeight() * d7);
 		long j13 = 0L;
 		long j15 = 0L;
 		long j17 = 0L;
@@ -848,24 +804,24 @@ public final class BlockColor {
 		int i21;
 		for(i21 = i10; i21 < i12; ++i21) {
 			for(int i22 = i9; i22 < i11; ++i22) {
-				int i23 = bufferedImage0.getRGB(i22, i21);
+				int i23 = image.getRGB(i22, i21);
 				int i24 = i23 >> 24 & 255;
-				j13 += (long)i24;
-				j15 += (long)((i23 >> 16 & 255) * i24);
-				j17 += (long)((i23 >> 8 & 255) * i24);
-				j19 += (long)((i23 >> 0 & 255) * i24);
+				j13 += i24;
+				j15 += (i23 >> 16 & 255) * i24;
+				j17 += (i23 >> 8 & 255) * i24;
+				j19 += (i23 & 255) * i24;
 			}
 		}
 
 		if(j13 == 0L) {
 			return 16711935;
 		} else {
-			i21 = bufferedImage0.getWidth() * bufferedImage0.getHeight();
+			i21 = image.getWidth() * image.getHeight();
 			double d25 = 1.0D / (double)j13;
-			j13 /= (long)i21;
-			j15 = (long)Math.min(255, Math.max(0, (int)((double)j15 * d25)));
-			j17 = (long)Math.min(255, Math.max(0, (int)((double)j17 * d25)));
-			j19 = (long)Math.min(255, Math.max(0, (int)((double)j19 * d25)));
+			j13 /= i21;
+			j15 = Math.min(255, Math.max(0, (int)((double)j15 * d25)));
+			j17 = Math.min(255, Math.max(0, (int)((double)j17 * d25)));
+			j19 = Math.min(255, Math.max(0, (int)((double)j19 * d25)));
 			return (int)(j13 << 24 | j15 << 16 | j17 << 8 | j19);
 		}
 	}
@@ -878,7 +834,7 @@ public final class BlockColor {
 		float f3 = (float)(i1 >> 24 & 255) * 0.003921569F;
 		float f4 = (float)(i1 >> 16 & 255) * 0.003921569F;
 		float f5 = (float)(i1 >> 8 & 255) * 0.003921569F;
-		float f6 = (float)(i1 >> 0 & 255) * 0.003921569F;
+		float f6 = (float)(i1 & 255) * 0.003921569F;
 		this.alpha = f3;
 		this.red = f4;
 		this.green = f5;
@@ -899,87 +855,94 @@ public final class BlockColor {
 		return object1 instanceof BlockColor && this.equals((BlockColor)object1);
 	}
 
-	boolean equals(BlockColor blockColor1) {
+	public boolean equals(BlockColor blockColor1) {
 		return this.argb == blockColor1.argb && this.tintType == blockColor1.tintType;
 	}
 
-	private static String getBlockTexture(Block block0) {
-		Method[] method4;
-		int i3 = (method4 = block0.getClass().getMethods()).length;
-		int i2 = 0;
-
-		while(true) {
-			if(i2 < i3) {
-				Method method1 = method4[i2];
-				if(method1.getReturnType() != String.class || method1.getParameterTypes().length != 0 || !method1.getName().equals("getTextureFile")) {
-					++i2;
-					continue;
-				}
-
-				try {
-					return (String)method1.invoke(block0, new Object[0]);
-				} catch (Exception exception5) {
+	private static BufferedImage[] getBlockImage(Block block) {
+		BufferedImage[] buffered = new BufferedImage[16];
+		for(int meta = 0;meta < buffered.length; ++meta) {
+			Sprite sprite = getSprite(block, meta);
+			if(sprite == null) {
+				buffered[meta] = GLTextureBufferedImage.create(1,1);
+				buffered[meta].setRGB(0,0, 0x00000000);
+			} else {
+				NativeImage image = sprite.getContents().getBaseFrame();
+				int width = image.getWidth();
+				int height = image.getHeight();
+				buffered[meta] = GLTextureBufferedImage.create(width, height);
+				int size = width * height;
+				for(int y = 0; y < height; ++y) {
+					for(int x = 0; x < width; ++x) {
+						int color = convertARGBtoABGR(image.getColor(x, y));
+						buffered[meta].setRGB(x, y, color);
+					}
 				}
 			}
+		}
+		return buffered;
+	}
 
+	public static int convertARGBtoABGR(int argb) {
+		return (argb & 0xFF00FF00) | ((argb & 0xFF) << 16) | ((argb >> 16) & 0xFF);
+	}
+
+	public static Sprite getSprite(Block block, int meta) {
+		try {
+			return block.getAtlas().getTexture(block.getTexture(1, meta)).getSprite();
+		} catch (Exception e) {
 			return null;
 		}
 	}
 
 	static class TempBlockAccess implements BlockView {
-		private int a;
-		private BlockEntity b;
-		private int c;
-		private float d;
-		private float e;
-		private int f;
-		private Material g;
-		private boolean h;
-		private boolean i;
-		private boolean j;
-		private BiomeSource k;
+		private int blockId;
+		private BlockEntity blockEnt;
+		private float naturalBrightness;
+		private float luminance;
+		private int meta;
+		private Material material;
+		private boolean opaque;
+		private boolean suffocate;
+		private BiomeSource biome;
 
 		private TempBlockAccess() {
 		}
 
 		public int getBlockId(int i1, int i2, int i3) {
-			return this.a;
+			return this.blockId;
 		}
 
 		public BlockEntity getBlockEntity(int i1, int i2, int i3) {
-			return this.b;
+			return this.blockEnt;
 		}
 
 		public float getNaturalBrightness(int i1, int i2, int i3, int i4) {
-			return this.d;
+			return this.naturalBrightness;
 		}
 
 		public float method_1782(int i1, int i2, int i3) {
-			return this.e;
+			return this.luminance;
 		}
 
 		public int getBlockMeta(int i1, int i2, int i3) {
-			return this.f;
+			return this.meta;
 		}
 
 		public Material getMaterial(int i1, int i2, int i3) {
-			return this.g;
+			return this.material;
 		}
 
 		public boolean method_1783(int i1, int i2, int i3) {
-			return this.h;
+			return this.opaque;
 		}
 
 		public boolean shouldSuffocate(int i1, int i2, int i3) {
-			return this.i;
+			return this.suffocate;
 		}
 
 		public BiomeSource method_1781() {
-			return this.k;
-		}
-
-		TempBlockAccess(TempBlockAccess blockColor$TempBlockAccess1) {
-			this();
+			return this.biome;
 		}
 	}
 }

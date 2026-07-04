@@ -1,0 +1,6 @@
+classTweaker v2 named
+
+accessible field net/minecraft/client/Minecraft INSTANCE Lnet/minecraft/client/Minecraft;
+accessible field net/minecraft/client/network/ClientNetworkHandler connection Lnet/minecraft/network/Connection;
+accessible field net/minecraft/network/Connection address Ljava/net/SocketAddress;
+accessible field net/minecraft/client/gui/hud/InGameHud messages Ljava/util/List;

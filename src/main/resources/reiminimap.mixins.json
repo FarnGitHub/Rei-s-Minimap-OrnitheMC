@@ -4,12 +4,7 @@
   "package": "reifnsk.minimap.mixin",
   "compatibilityLevel": "JAVA_17",
   "client": [
-    "InGameHudMixin",
-    "accessor.ClientNetworkGetter",
-    "accessor.ConnectionGetter",
-    "accessor.GameGuiGetter",
-    "accessor.MinecraftGetter",
-    "accessor.PlayerClientMPGetter"
+    "InGameHudMixin"
   ],
   "injectors": {
     "defaultRequire": 1
