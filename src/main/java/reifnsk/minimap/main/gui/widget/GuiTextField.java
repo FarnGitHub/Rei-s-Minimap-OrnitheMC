@@ -1,10 +1,11 @@
-package reifnsk.minimap;
+package reifnsk.minimap.main.gui.widget;
 
 import net.minecraft.client.Minecraft;
 
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import org.lwjgl.input.Keyboard;
+import reifnsk.minimap.main.ReiMinimap;
 
 public class GuiTextField extends ButtonWidget {
 	private static GuiTextField active;
@@ -49,14 +50,14 @@ public class GuiTextField extends ButtonWidget {
 		active = this;
 	}
 
-	static void a(Minecraft minecraft0, char c1, int i2) {
+	public static void activeRender(Minecraft minecraft0, char c1, int i2) {
 		if(active != null) {
-			active.kt(minecraft0, c1, i2);
+			active.keyboardType(minecraft0, c1, i2);
 		}
 
 	}
 
-	private void kt(Minecraft minecraft1, char c2, int i3) {
+	private void keyboardType(Minecraft minecraft1, char c2, int i3) {
 		String string4;
 		int i5;
 		if(this.inputType == 0 && (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL)) && i3 == 47) {
@@ -125,7 +126,7 @@ public class GuiTextField extends ButtonWidget {
 		}
 	}
 
-	boolean checkInput(char c1) {
+	public boolean checkInput(char c1) {
 		switch(this.inputType) {
 		case 0:
 			if(" !\"#$%&\'()*+,-./0123456789;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_\'abcdefghijklmnopqrstuvwxyz{|}~\u2302\u00c7\u00fc\u00e9\u00e2\u00e4\u00e0\u00e5\u00e7\u00ea\u00eb\u00e8\u00ef\u00ee\u00ec\u00c4\u00c5\u00c9\u00e6\u00c6\u00f4\u00f6\u00f2\u00fb\u00f9\u00ff\u00d6\u00dc\u00f8\u00a3\u00d8\u00d7\u0192\u00e1\u00ed\u00f3\u00fa\u00f1\u00d1\u00aa\u00ba\u00bf\u00ae\u00ac\u00bd\u00bc\u00a1\u00ab\u00bb".indexOf(c1) != -1) {
@@ -150,7 +151,7 @@ public class GuiTextField extends ButtonWidget {
 		}
 	}
 
-	void norm() {
+	public void norm() {
 		String string1 = this.text;
 
 		try {
@@ -171,36 +172,36 @@ public class GuiTextField extends ButtonWidget {
 		this.text = string1;
 	}
 
-	void setInputType(int i1) {
+	public void setInputType(int i1) {
 		this.inputType = i1;
 	}
 
-	void setPosition(int i1, int i2) {
+	public void setPosition(int i1, int i2) {
 		this.x = i1;
 		this.y = i2;
 	}
 
-	void setSize(int i1, int i2) {
+	public void setSize(int i1, int i2) {
 		this.width = i1;
 		this.height = i2;
 	}
 
-	void setBounds(int i1, int i2, int i3, int i4) {
+	public void setBounds(int i1, int i2, int i3, int i4) {
 		this.x = i1;
 		this.y = i2;
 		this.width = i3;
 		this.height = i4;
 	}
 
-	void setNext(GuiTextField guiTextField1) {
+	public void setNext(GuiTextField guiTextField1) {
 		this.next = guiTextField1;
 	}
 
-	void setPrev(GuiTextField guiTextField1) {
+	public void setPrev(GuiTextField guiTextField1) {
 		this.prev = guiTextField1;
 	}
 
-	static void next() {
+	public static void next() {
 		if(active != null) {
 			active.norm();
 			active = active.next;
@@ -208,7 +209,7 @@ public class GuiTextField extends ButtonWidget {
 
 	}
 
-	static void prev() {
+	public static void prev() {
 		if(active != null) {
 			active.norm();
 			active = active.prev;
@@ -216,11 +217,11 @@ public class GuiTextField extends ButtonWidget {
 
 	}
 
-	static GuiTextField getActive() {
+	public static GuiTextField getActive() {
 		return active;
 	}
 
-	void setNorm(int i1) {
+	public void setNorm(int i1) {
 		this.norm = i1;
 	}
 }

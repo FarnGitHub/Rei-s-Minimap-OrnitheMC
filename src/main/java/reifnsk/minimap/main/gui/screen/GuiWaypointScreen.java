@@ -1,4 +1,4 @@
-package reifnsk.minimap;
+package reifnsk.minimap.main.gui.screen;
 
 import java.util.Iterator;
 import java.util.List;
@@ -10,6 +10,11 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
+import reifnsk.minimap.main.ReiMinimap;
+import reifnsk.minimap.main.waypoint.Waypoint;
+import reifnsk.minimap.main.gui.widget.GuiScrollbar;
+import reifnsk.minimap.main.gui.widget.GuiSimpleButton;
+import reifnsk.minimap.main.gui.widget.GuiWaypoint;
 
 public class GuiWaypointScreen extends Screen implements GuiScreenInterface {
 	static final int MIN_STRING_WIDTH = 64;
@@ -202,20 +207,20 @@ public class GuiWaypointScreen extends Screen implements GuiScreenInterface {
 
 	}
 
-	void setRemoveMode(boolean z1) {
+	public void setRemoveMode(boolean z1) {
 		this.removeMode = z1;
 		this.deleteObject.clear();
 	}
 
-	boolean getRemoveMode() {
+	public boolean getRemoveMode() {
 		return this.removeMode;
 	}
 
-	boolean isRemove(Waypoint waypoint1) {
+	public boolean isRemove(Waypoint waypoint1) {
 		return this.deleteObject.containsKey(waypoint1);
 	}
 
-	void addWaypoint(Waypoint waypoint1) {
+	public void addWaypoint(Waypoint waypoint1) {
 		if(!this.wayPts.contains(waypoint1)) {
 			this.wayPts.add(waypoint1);
 			this.rmm.saveWaypoints();
@@ -225,7 +230,7 @@ public class GuiWaypointScreen extends Screen implements GuiScreenInterface {
 
 	}
 
-	void removeWaypoint(Waypoint waypoint1) {
+	public void removeWaypoint(Waypoint waypoint1) {
 		if(this.removeMode) {
 			if(this.deleteObject.remove(waypoint1) == null) {
 				this.deleteObject.put(waypoint1, waypoint1);
@@ -237,7 +242,7 @@ public class GuiWaypointScreen extends Screen implements GuiScreenInterface {
 
 	}
 
-	void updateWaypoint(Waypoint waypoint1) {
+	public void updateWaypoint(Waypoint waypoint1) {
 		if(this.wayPts.contains(waypoint1)) {
 			this.rmm.saveWaypoints();
 			this.updateWaypoints();

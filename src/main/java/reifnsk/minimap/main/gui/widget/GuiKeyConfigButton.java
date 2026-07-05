@@ -1,7 +1,9 @@
-package reifnsk.minimap;
+package reifnsk.minimap.main.gui.widget;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import reifnsk.minimap.main.option.KeyInput;
+import reifnsk.minimap.main.gui.screen.GuiKeyConfigScreen;
 
 public class GuiKeyConfigButton extends ButtonWidget {
 	private GuiKeyConfigScreen parrent;
@@ -41,7 +43,7 @@ public class GuiKeyConfigButton extends ButtonWidget {
 		return i2 >= this.x + this.width - this.buttonWidth && i2 < this.x + this.width && i3 >= this.y && i3 < this.y + this.height;
 	}
 
-	void setBounds(int i1, int i2, int i3, int i4) {
+	public void setBounds(int i1, int i2, int i3, int i4) {
 		this.x = i1;
 		this.y = i2;
 		this.labelWidth = i3;
@@ -49,7 +51,7 @@ public class GuiKeyConfigButton extends ButtonWidget {
 		this.width = i3 + i4 + 2;
 	}
 
-	KeyInput getKeyInput() {
+	public KeyInput getKeyInput() {
 		return this.keyInput;
 	}
 }

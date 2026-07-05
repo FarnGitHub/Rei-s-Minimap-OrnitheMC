@@ -1,4 +1,4 @@
-package reifnsk.minimap;
+package reifnsk.minimap.main.render;
 
 public enum TintType {
 	NONE,

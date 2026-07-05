@@ -1,7 +1,11 @@
-package reifnsk.minimap;
+package reifnsk.minimap.main.gui.screen;
 
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import reifnsk.minimap.main.option.EnumOption;
+import reifnsk.minimap.main.ReiMinimap;
+import reifnsk.minimap.main.gui.widget.GuiOptionButton;
+import reifnsk.minimap.main.gui.widget.GuiSimpleButton;
 
 import java.util.ArrayList;
 
@@ -31,7 +35,7 @@ public class GuiOptionScreen extends Screen implements GuiScreenInterface {
 	public GuiOptionScreen() {
 	}
 
-	GuiOptionScreen(int i1) {
+	public GuiOptionScreen(int i1) {
 		this.page = i1;
 	}
 

@@ -2,7 +2,7 @@ package reifnsk.minimap.modmenu;
 
 import net.danygames2014.modmenu.api.ConfigScreenFactory;
 import net.danygames2014.modmenu.api.ModMenuApi;
-import reifnsk.minimap.GuiOptionScreen;
+import reifnsk.minimap.main.gui.screen.GuiOptionScreen;
 
 public class ModMenuLinker implements ModMenuApi {
 

@@ -1,4 +1,4 @@
-package reifnsk.minimap;
+package reifnsk.minimap.main.gui.widget;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -11,7 +11,7 @@ public class GuiScrollbar extends ButtonWidget {
 	public static final int HORIZONTAL = 1;
 	private long repeatStart = 500000000L;
 	private long repeatInterval = 40000000L;
-	int orientation;
+	public int orientation;
 	private float value = 0.0F;
 	private float extent = 0.0F;
 	private float min = 0.0F;

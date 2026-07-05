@@ -1,4 +1,4 @@
-package reifnsk.minimap;
+package reifnsk.minimap.main;
 
 public class MinimapException extends RuntimeException {
 	public MinimapException() {

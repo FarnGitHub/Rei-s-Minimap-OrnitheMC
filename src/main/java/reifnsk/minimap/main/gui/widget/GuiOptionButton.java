@@ -1,8 +1,11 @@
-package reifnsk.minimap;
+package reifnsk.minimap.main.gui.widget;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import reifnsk.minimap.main.option.EnumOption;
+import reifnsk.minimap.main.option.EnumOptionValue;
+import reifnsk.minimap.main.ReiMinimap;
 
 public class GuiOptionButton extends ButtonWidget {
 	private static int NAME_WIDTH;

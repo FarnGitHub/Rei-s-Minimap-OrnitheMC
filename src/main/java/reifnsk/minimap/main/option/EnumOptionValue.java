@@ -1,4 +1,6 @@
-package reifnsk.minimap;
+package reifnsk.minimap.main.option;
+
+import reifnsk.minimap.main.ReiMinimap;
 
 public enum EnumOptionValue {
 	ENABLE(-1610547456, "Enabled"),
@@ -63,25 +65,25 @@ public enum EnumOptionValue {
 	public final int color;
 	private final String text;
 
-	private EnumOptionValue(int i3) {
-		this.color = i3;
+	EnumOptionValue(int color) {
+		this.color = color;
 		this.text = ReiMinimap.capitalize(this.name());
 	}
 
-	private EnumOptionValue(int i3, String string4) {
+	EnumOptionValue(int i3, String text) {
 		this.color = i3;
-		this.text = string4;
+		this.text = text;
 	}
 
 	public String text() {
 		return this.text;
 	}
 
-	public static EnumOptionValue bool(boolean z0) {
-		return z0 ? ENABLE : DISABLE;
+	public static EnumOptionValue bool(boolean value) {
+		return value ? ENABLE : DISABLE;
 	}
 
-	public static boolean bool(EnumOptionValue enumOptionValue0) {
-		return enumOptionValue0 == ENABLE;
+	public static boolean bool(EnumOptionValue enumOption) {
+		return enumOption == ENABLE;
 	}
 }

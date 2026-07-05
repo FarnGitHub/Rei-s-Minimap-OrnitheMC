@@ -1,4 +1,4 @@
-package reifnsk.minimap;
+package reifnsk.minimap.main.waypoint;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;

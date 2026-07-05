@@ -1,4 +1,4 @@
-package reifnsk.minimap;
+package reifnsk.minimap.main.gui.screen;
 
 import java.util.List;
 
@@ -9,6 +9,11 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.entity.player.ClientPlayerEntity;
 import net.minecraft.util.math.MathHelper;
 import org.lwjgl.input.Keyboard;
+import reifnsk.minimap.main.ReiMinimap;
+import reifnsk.minimap.main.waypoint.Waypoint;
+import reifnsk.minimap.main.gui.widget.GuiScrollbar;
+import reifnsk.minimap.main.gui.widget.GuiSimpleButton;
+import reifnsk.minimap.main.gui.widget.GuiTextField;
 
 public class GuiWaypointEditorScreen extends Screen implements GuiScreenInterface {
 	private GuiWaypointScreen parrent;
@@ -156,7 +161,7 @@ public class GuiWaypointEditorScreen extends Screen implements GuiScreenInterfac
 			this.zCoordTextField.norm();
 			this.accept();
 		} else {
-			GuiTextField.a(this.minecraft, c1, i2);
+			GuiTextField.activeRender(this.minecraft, c1, i2);
 		}
 	}
 
@@ -188,10 +193,9 @@ public class GuiWaypointEditorScreen extends Screen implements GuiScreenInterfac
 			float f7 = this.rgb[2].getValue() / 255.0F;
 			this.waypoint = new Waypoint(string1, i2, i3, i4, true, f5, f6, f7);
 			if(this.parrent == null) {
-				ReiMinimap reiMinimap8 = ReiMinimap.instance;
-				List list9 = reiMinimap8.getWaypoints();
-				list9.add(this.waypoint);
-				reiMinimap8.saveWaypoints();
+				ReiMinimap reiMinimap = ReiMinimap.instance;
+				reiMinimap.getWaypoints().add(this.waypoint);
+				reiMinimap.saveWaypoints();
 			} else {
 				this.parrent.addWaypoint(this.waypoint);
 			}

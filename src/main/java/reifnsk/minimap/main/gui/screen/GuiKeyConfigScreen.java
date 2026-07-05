@@ -1,8 +1,11 @@
-package reifnsk.minimap;
+package reifnsk.minimap.main.gui.screen;
 
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import reifnsk.minimap.main.option.KeyInput;
+import reifnsk.minimap.main.gui.widget.GuiKeyConfigButton;
+import reifnsk.minimap.main.gui.widget.GuiSimpleButton;
 
 public class GuiKeyConfigScreen extends Screen implements GuiScreenInterface {
 	private int top;
@@ -91,7 +94,7 @@ public class GuiKeyConfigScreen extends Screen implements GuiScreenInterface {
 		super.render(i1, i2, f3);
 	}
 
-	GuiKeyConfigButton getEditKeyConfig() {
+	public GuiKeyConfigButton getEditKeyConfig() {
 		return this.edit;
 	}
 

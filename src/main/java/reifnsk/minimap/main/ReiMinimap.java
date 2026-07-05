@@ -1,9 +1,8 @@
-package reifnsk.minimap;
+package reifnsk.minimap.main;
 
 import java.awt.Desktop;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -57,16 +56,28 @@ import net.modificationstation.stationapi.api.worldgen.BiomeAPI;
 import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
+import reifnsk.minimap.main.gui.screen.GuiOptionScreen;
+import reifnsk.minimap.main.gui.screen.GuiScreenInterface;
+import reifnsk.minimap.main.gui.screen.GuiWaypointEditorScreen;
+import reifnsk.minimap.main.gui.screen.GuiWaypointScreen;
+import reifnsk.minimap.main.render.*;
+import reifnsk.minimap.main.option.EnumOption;
+import reifnsk.minimap.main.option.EnumOptionValue;
+import reifnsk.minimap.main.option.KeyInput;
+import reifnsk.minimap.main.cache.ChunkCache;
+import reifnsk.minimap.main.cache.Environment;
+import reifnsk.minimap.main.waypoint.Waypoint;
+import reifnsk.minimap.main.waypoint.WaypointEntity;
 
-@SuppressWarnings({"unused", "FieldMayBeFinal", "FieldCanBeLocal", "unchecked"})
+@SuppressWarnings({"unused", "FieldMayBeFinal", "FieldCanBeLocal", "unchecked", "BusyWait", "ResultOfMethodCallIgnored", "CallToPrintStackTrace", "SameParameterValue"})
 public class ReiMinimap implements Runnable {
-	public static final String version = String.format("%s [%s]", new Object[]{"v3.0_01", "Beta 1.7.3"});
-	static final File directory = new File(Minecraft.getRunDirectory(), "mods" + File.separatorChar + "rei_minimap");
+	public static final String version = String.format("%s [%s]", "v3.0_01", "Beta 1.7.3");
+	public static final File directory = new File(Minecraft.getRunDirectory(), "mods" + File.separatorChar + "rei_minimap");
 	private float[] lightBrightnessTable = this.generateLightBrightnessTable(0.125F);
 	private static final int[] updateFrequencys = new int[]{2, 5, 10, 20, 40};
 	public static final ReiMinimap instance = new ReiMinimap();
 	public static Biome[] bgbList;
-	Minecraft theMinecraft;
+	public Minecraft theMinecraft;
 	private final Tessellator tessellator = Tessellator.INSTANCE;
 	private World theWorld;
 	private PlayerEntity thePlayer;
@@ -81,7 +92,7 @@ public class ReiMinimap implements Runnable {
 	private int scHeight;
 	private GLTextureBufferedImage texture = GLTextureBufferedImage.create(256, 256);
 	private ChunkCache chunkCache = new ChunkCache(6);
-	final Thread mcThread;
+	public final Thread mcThread;
 	private Thread workerThread;
 	private Lock lock = new ReentrantLock();
 	private Condition condition = this.lock.newCondition();
@@ -161,14 +172,11 @@ public class ReiMinimap implements Runnable {
 	private long delay;
 	private boolean delayFlag;
 	private TexturePack texturePack;
-	private int worldHeight = 127;
 	private int[] temperatureColor;
 	private int[] humidityColor;
 	private HashMap<Integer, String> dimensionName = new HashMap<>();
 	private HashMap<Integer, Double> dimensionScale = new HashMap<>();
-	private boolean chatWelcomed;
 	private List<ChatHudLine> chatLineList;
-	private ChatHudLine chatLineLast;
 	private long chatTime;
 	private boolean configEntitiesRadar;
 	private boolean configEntityPlayer;
@@ -202,33 +210,6 @@ public class ReiMinimap implements Runnable {
 	private float[] lightmapBlue;
 
 	static {
-		InputStream inputStream7 = InGameHud.class.getResourceAsStream(InGameHud.class.getSimpleName() + ".class");
-		if(inputStream7 != null) {
-			try {
-				ByteArrayOutputStream byteArrayOutputStream9 = new ByteArrayOutputStream();
-				byte[] b10 = new byte[4096];
-
-				while(true) {
-					int i11 = inputStream7.read(b10);
-					if(i11 == -1) {
-						inputStream7.close();
-						String string12 = (byteArrayOutputStream9.toString(StandardCharsets.UTF_8)).toLowerCase(Locale.ENGLISH);
-						if(string12.contains("§0§0") && string12.contains("§e§f")) {
-							instance.errorString = "serious error";
-							instance.texture.unregister();
-							instance.texture = null;
-							instance.chunkCache.clear();
-							instance.chunkCache = null;
-						}
-						break;
-					}
-
-					byteArrayOutputStream9.write(b10, 0, i11);
-				}
-			} catch (Exception exception5) {
-			}
-		}
-
 		ZOOM_LIST = new double[]{0.5D, 1.0D, 1.5D, 2.0D, 4.0D, 8.0D};
 		temp = new float[10];
 		float f6 = 0.0F;
@@ -252,11 +233,11 @@ public class ReiMinimap implements Runnable {
 		}
 	}
 
-	boolean getAllowCavemap() {
+	public boolean getAllowCavemap() {
 		return this.allowCavemap;
 	}
 
-	boolean getAllowEntitiesRadar() {
+	public boolean getAllowEntitiesRadar() {
 		return this.allowEntitiesRadar;
 	}
 
@@ -330,8 +311,7 @@ public class ReiMinimap implements Runnable {
 
 			if(this.texturePack != mc.texturePacks.selected) {
 				this.texturePack = mc.texturePacks.selected;
-				BlockColor.textureColorUpdate();
-				BlockColor.calcBlockColorTD();
+				BlockColors.updateBlockColor();
 				this.temperatureColor = GLTexture.TEMPERATURE.getData();
 				this.humidityColor = GLTexture.HUMIDITY.getData();
 			}
@@ -347,22 +327,21 @@ public class ReiMinimap implements Runnable {
 				this.theWorld.spawnEntity(new WaypointEntity(this.theMinecraft));
 				this.multiplayer = this.thePlayer instanceof MultiplayerClientPlayerEntity;
 				if(this.theWorld != null) {
-					this.worldHeight = theWorld.getHeight() - 1;
 					Environment.setWorld(this.theWorld);
 					boolean canLoad;
 					String worldName;
 					if(this.multiplayer) {
-						SocketAddress socketAddress42 = getServerSocketAdress();
-						if(socketAddress42 == null) {
+						SocketAddress socket = getServerSocketAdress();
+						if(socket == null) {
 							throw new MinimapException("SMP ADDRESS ACQUISITION FAILURE");
 						}
 
-						canLoad = this.currentServer != socketAddress42;
+						canLoad = this.currentServer != socket;
 						if(canLoad) {
-							String string47 = socketAddress42.toString().replaceAll("[\r\n]", "");
+							String string47 = socket.toString().replaceAll("[\r\n]", "");
 							Matcher matcher50 = Pattern.compile("(.*)/(.*):([0-9]+)").matcher(string47);
 							if(!matcher50.matches()) {
-								String string55 = socketAddress42.toString().replaceAll("[a-z]", "a").replaceAll("[A-Z]", "A").replaceAll("[0-9]", "*");
+								String string55 = socket.toString().replaceAll("[a-z]", "a").replaceAll("[A-Z]", "A").replaceAll("[0-9]", "*");
 								throw new MinimapException("SMP ADDRESS FORMAT EXCEPTION: " + string55);
 							}
 
@@ -384,7 +363,7 @@ public class ReiMinimap implements Runnable {
 							}
 
 							this.currentLevelName = worldName;
-							this.currentServer = socketAddress42;
+							this.currentServer = socket;
 						}
 					} else {
 						worldName = this.theWorld.getProperties().getName();
@@ -412,15 +391,14 @@ public class ReiMinimap implements Runnable {
 					this.waypointDimension = this.currentDimension;
 					if(canLoad) {
 						this.chatTime = System.currentTimeMillis();
-						this.chatWelcomed = !this.multiplayer;
-						this.allowCavemap = !this.multiplayer;
-						this.allowEntitiesRadar = !this.multiplayer;
-						this.allowEntityPlayer = !this.multiplayer;
-						this.allowEntityAnimal = !this.multiplayer;
-						this.allowEntityMob = !this.multiplayer;
-						this.allowEntitySlime = !this.multiplayer;
-						this.allowEntitySquid = !this.multiplayer;
-						this.allowEntityLiving = !this.multiplayer;
+						this.allowCavemap = true;
+						this.allowEntitiesRadar = true;
+						this.allowEntityPlayer = true;
+						this.allowEntityAnimal = true;
+						this.allowEntityMob = true;
+						this.allowEntitySlime = true;
+						this.allowEntitySquid = true;
+						this.allowEntityLiving = true;
 						this.loadWaypoints();
 					}
 
@@ -432,90 +410,6 @@ public class ReiMinimap implements Runnable {
 
 			this.delayFlag = this.currentTimeMillis < this.delay;
             Environment.calcEnvironment();
-			if(!this.chatWelcomed && System.currentTimeMillis() < this.chatTime + 10000L) {
-
-                for (ChatHudLine chatLine : this.chatLineList) {
-                    if (chatLine == null || this.chatLineLast == chatLine) {
-                        break;
-                    }
-
-                    Matcher matcher = Pattern.compile("§0§0((?:§[1-9a-d])+)§e§f").matcher(chatLine.text);
-
-                    while (matcher.find()) {
-                        this.chatWelcomed = true;
-                        char[] allowers;
-                        int arrayLength = (allowers = matcher.group(1).toCharArray()).length;
-
-                        for (int index = 0; index < arrayLength; ++index) {
-                            char allower = allowers[index];
-                            switch (allower) {
-                                case '1':
-                                    this.allowCavemap = true;
-                                    break;
-                                case '2':
-                                    this.allowEntityPlayer = true;
-                                    break;
-                                case '3':
-                                    this.allowEntityAnimal = true;
-                                    break;
-                                case '4':
-                                    this.allowEntityMob = true;
-                                    break;
-                                case '5':
-                                    this.allowEntitySlime = true;
-                                    break;
-                                case '6':
-                                    this.allowEntitySquid = true;
-                                    break;
-                                case '7':
-                                    this.allowEntityLiving = true;
-                            }
-                        }
-                    }
-                }
-
-				this.chatLineLast = this.chatLineList.isEmpty() ? null : this.chatLineList.get(0);
-				if(this.chatWelcomed) {
-					this.allowEntitiesRadar = this.allowEntityPlayer || this.allowEntityAnimal || this.allowEntityMob || this.allowEntitySlime || this.allowEntitySquid || this.allowEntityLiving;
-					if(this.allowCavemap) {
-						this.chatInfo("§E[Rei\'s Minimap] enabled: cavemapping.");
-					}
-
-					if(this.allowEntitiesRadar) {
-						StringBuilder builder = new StringBuilder("§E[Rei\'s Minimap] enabled: entities radar (");
-						if(this.allowEntityPlayer) {
-							builder.append("Player, ");
-						}
-
-						if(this.allowEntityAnimal) {
-							builder.append("Animal, ");
-						}
-
-						if(this.allowEntityMob) {
-							builder.append("Mob, ");
-						}
-
-						if(this.allowEntitySlime) {
-							builder.append("Slime, ");
-						}
-
-						if(this.allowEntitySquid) {
-							builder.append("Squid, ");
-						}
-
-						if(this.allowEntityLiving) {
-							builder.append("Living, ");
-						}
-
-						builder.setLength(builder.length() - 2);
-						builder.append(")");
-						this.chatInfo(builder.toString());
-					}
-				}
-			} else {
-				this.chatWelcomed = true;
-			}
-
 			this.visibleEntitiesRadar = this.allowEntitiesRadar && this.configEntitiesRadar;
 			this.visibleEntityPlayer = this.allowEntityPlayer && this.configEntityPlayer;
 			this.visibleEntityAnimal = this.allowEntityAnimal && this.configEntityAnimal;
@@ -746,7 +640,7 @@ public class ReiMinimap implements Runnable {
 			}
 		} catch (RuntimeException runtimeException34) {
 			runtimeException34.printStackTrace();
-			this.errorString = "[Rei\'s Minimap] ERROR: " + runtimeException34.getMessage();
+			this.errorString = "[Rei's Minimap] ERROR: " + runtimeException34.getMessage();
 			error("mainloop runtime exception", runtimeException34);
 		} finally {
 			GL11.glPopMatrix();
@@ -755,7 +649,7 @@ public class ReiMinimap implements Runnable {
 		}
 
 		if(this.count != 0) {
-			this.theMinecraft.textRenderer.drawWithShadow(String.format("%12d", new Object[]{this.ntime / (long)this.count}), 2, 12, -1);
+			this.theMinecraft.textRenderer.drawWithShadow(String.format("%12d", this.ntime / (long)this.count), 2, 12, -1);
 		}
 
 		Thread.yield();
@@ -779,7 +673,7 @@ public class ReiMinimap implements Runnable {
 						try {
 							this.condition.await();
 							break label199;
-						} catch (InterruptedException interruptedException19) {
+						} catch (InterruptedException ignored) {
 						} finally {
 							this.lock.unlock();
 						}
@@ -810,7 +704,7 @@ public class ReiMinimap implements Runnable {
 						this.condition.await();
 					}
 					continue;
-				} catch (InterruptedException interruptedException21) {
+				} catch (InterruptedException ignored) {
 				} catch (Exception exception22) {
 					continue;
 				} finally {
@@ -963,8 +857,8 @@ public class ReiMinimap implements Runnable {
 				Chunk chunk8 = null;
 				Chunk chunk9 = null;
 				Chunk chunk10 = null;
-				Chunk chunk11 = null;
-				Chunk chunk12 = null;
+				Chunk chunk11;
+				Chunk chunk12;
 				Chunk chunk13 = null;
 				Chunk chunk14 = null;
 				if(this.undulate) {
@@ -994,8 +888,8 @@ public class ReiMinimap implements Runnable {
 								}
 
 								pixelColor6.clear();
-								int i19 = !this.omitHeightCalc && !this.heightmap && !this.undulate ? this.worldHeight : Math.min(this.worldHeight, chunk1.getHeight(i17, i15));
-								int i20 = this.omitHeightCalc ? i19 : this.worldHeight;
+								int i19 = !this.omitHeightCalc && !this.heightmap && !this.undulate ? this.getWorldHeight() : Math.min(this.getWorldHeight(), chunk1.getHeight(i17, i15));
+								int i20 = this.omitHeightCalc ? i19 : this.getWorldHeight();
 								this.surfaceCalc(chunk1, i17, i20, i15, pixelColor6, null, thread2);
 								float f21;
 								if(this.heightmap) {
@@ -1104,7 +998,7 @@ public class ReiMinimap implements Runnable {
 								int i9 = Environment.getEnvironment(chunk1, i7, i5, thread2).getBiomeColor();
 								byte b10 = (byte)(i9 >> 16);
 								byte b11 = (byte)(i9 >> 8);
-								byte b12 = (byte)(i9 >> 0);
+								byte b12 = (byte)(i9);
 								this.texture.setRGB(i8, i6, b10, b11, b12);
 							}
 						}
@@ -1233,187 +1127,173 @@ public class ReiMinimap implements Runnable {
 		}
 	}
 
-	private static final byte ftob(float f0) {
+	private static byte ftob(float f0) {
 		return (byte)Math.max(0, Math.min(255, (int)(f0 * 255.0F)));
 	}
 
-	private void surfaceCalc(Chunk chunk1, int i2, int i3, int i4, PixelColor pixelColor5, TintType tintType6, Thread thread7) {
-		int i8 = chunk1.getBlockId(i2, i3, i4);
+	private void surfaceCalc(Chunk chunk, int x, int y, int z, PixelColor pColor, TintType tint, Thread thread) {
+		int i8 = chunk.getBlockId(x, y, z);
 		if(i8 != 0 && (!this.hideSnow || i8 != 78)) {
-			int i9 = BlockColor.useMetadata(i8) ? chunk1.getBlockMeta(i2, i3, i4) : 0;
-			BlockColor blockColor10 = BlockColor.getBlockColor(i8, i9);
+			int i9 = BlockColors.useMetadata(i8) ? chunk.getBlockMeta(x, y, z) : 0;
+			BlockColor blockColor = BlockColors.getBlockColor(i8, i9);
 			if(this.transparency) {
-				if(blockColor10.alpha < 1.0F && i3 > 0) {
-					this.surfaceCalc(chunk1, i2, i3 - 1, i4, pixelColor5, blockColor10.tintType, thread7);
-					if(blockColor10.alpha == 0.0F) {
+				if(blockColor.alpha < 1.0F && y > 0) {
+					this.surfaceCalc(chunk, x, y - 1, z, pColor, blockColor.tintType, thread);
+					if(blockColor.alpha == 0.0F) {
 						return;
 					}
 				}
-			} else if(blockColor10.alpha == 0.0F && i3 > 0) {
-				this.surfaceCalc(chunk1, i2, i3 - 1, i4, pixelColor5, blockColor10.tintType, thread7);
+			} else if(blockColor.alpha == 0.0F && y > 0) {
+				this.surfaceCalc(chunk, x, y - 1, z, pColor, blockColor.tintType, thread);
 				return;
 			}
 
 			int i11;
 			if(this.lightType == 0) {
-				switch(this.lightmap) {
-				case 3:
-					i11 = 15;
-					break;
-				default:
-					this.lightmap = 0;
-				case 0:
-				case 1:
-				case 2:
-					i11 = i3 < this.worldHeight ? chunk1.getLight(LightType.SKY, i2, i3 + 1, i4) : 15;
-				}
+                i11 = switch (this.lightmap) {
+                    case 3 -> 15;
+                    case 0, 1, 2 -> y < this.getWorldHeight() ? chunk.getLight(LightType.SKY, x, y + 1, z) : 15;
+                    default -> 0;
+                };
 
-				int i23 = Math.max(Block.BLOCKS_LIGHT_LUMINANCE[i8], chunk1.getLight(LightType.BLOCK, i2, i3 + 1, i4));
+				int i23 = Math.max(Block.BLOCKS_LIGHT_LUMINANCE[i8], chunk.getLight(LightType.BLOCK, x, y + 1, z));
 				int i26 = i11 << 4 | i23;
 				float f27 = this.lightmapRed[i26];
 				float f29 = this.lightmapGreen[i26];
 				float f30 = this.lightmapBlue[i26];
-				if(blockColor10.tintType == TintType.WATER && tintType6 == TintType.WATER) {
+				if(blockColor.tintType == TintType.WATER && tint == TintType.WATER) {
 					return;
 				}
 
 				if(this.environmentColor) {
 					Environment environment31;
 					int i33;
-					switch(blockColor10.tintType) {
+					switch(blockColor.tintType) {
 						case GRASS:
-							environment31 = Environment.getEnvironment(chunk1, i2, i4, thread7);
+							environment31 = Environment.getEnvironment(chunk, x, z, thread);
 							i33 = environment31.getGrassColor();
-							pixelColor5.composite(blockColor10.alpha, i33, f27 * blockColor10.red, f29 * blockColor10.green, f30 * blockColor10.blue);
+							pColor.composite(blockColor.alpha, i33, f27 * blockColor.red, f29 * blockColor.green, f30 * blockColor.blue);
 							return;
 						case TALL_GRASS:
-							long j32 = i2 * 3129871 + i4 * 6129781 + i3;
+							long j32 = x * 3129871L + z * 6129781L + y;
 							j32 = j32 * j32 * 42317861L + j32 * 11L;
-							int i34 = (int) ((long) i2 + ((j32 >> 14 & 31L) - 16L));
-							int i20 = (int) ((long) i4 + ((j32 >> 24 & 31L) - 16L));
-							int i21 = Environment.getEnvironment(chunk1, i34, i20, thread7).getGrassColor();
-							pixelColor5.composite(blockColor10.alpha, i21, f27 * blockColor10.red, f29 * blockColor10.green, f30 * blockColor10.blue);
+							int i34 = (int) ((long) x + ((j32 >> 14 & 31L) - 16L));
+							int i20 = (int) ((long) z + ((j32 >> 24 & 31L) - 16L));
+							int i21 = Environment.getEnvironment(chunk, i34, i20, thread).getGrassColor();
+							pColor.composite(blockColor.alpha, i21, f27 * blockColor.red, f29 * blockColor.green, f30 * blockColor.blue);
 							return;
 						case FOLIAGE:
-							environment31 = Environment.getEnvironment(chunk1, i2, i4, thread7);
+							environment31 = Environment.getEnvironment(chunk, x, z, thread);
 							i33 = environment31.getFoliageColor();
-							pixelColor5.composite(blockColor10.alpha, i33, f27 * blockColor10.red, f29 * blockColor10.green, f30 * blockColor10.blue);
+							pColor.composite(blockColor.alpha, i33, f27 * blockColor.red, f29 * blockColor.green, f30 * blockColor.blue);
 							return;
 						default:
 							break;
 					}
 				} else {
-					switch(blockColor10.tintType) {
+					switch(blockColor.tintType) {
 					case GRASS:
-						pixelColor5.composite(blockColor10.alpha, this.grassColor, f27 * blockColor10.red, f29 * blockColor10.green, f30 * blockColor10.blue);
+						pColor.composite(blockColor.alpha, this.grassColor, f27 * blockColor.red, f29 * blockColor.green, f30 * blockColor.blue);
 						return;
 					case TALL_GRASS:
-						pixelColor5.composite(blockColor10.alpha, this.grassColor, f27 * blockColor10.red * 0.9F, f29 * blockColor10.green * 0.9F, f30 * blockColor10.blue * 0.9F);
+						pColor.composite(blockColor.alpha, this.grassColor, f27 * blockColor.red * 0.9F, f29 * blockColor.green * 0.9F, f30 * blockColor.blue * 0.9F);
 						return;
 					case FOLIAGE:
-						pixelColor5.composite(blockColor10.alpha, this.foliageColor, f27 * blockColor10.red, f29 * blockColor10.green, f30 * blockColor10.blue);
+						pColor.composite(blockColor.alpha, this.foliageColor, f27 * blockColor.red, f29 * blockColor.green, f30 * blockColor.blue);
 						return;
 					}
 				}
 
-				if(blockColor10.tintType == TintType.PINE) {
-					pixelColor5.composite(blockColor10.alpha, this.foliageColorPine, f27 * blockColor10.red, f29 * blockColor10.green, f30 * blockColor10.blue);
+				if(blockColor.tintType == TintType.PINE) {
+					pColor.composite(blockColor.alpha, this.foliageColorPine, f27 * blockColor.red, f29 * blockColor.green, f30 * blockColor.blue);
 					return;
 				}
 
-				if(blockColor10.tintType == TintType.BIRCH) {
-					pixelColor5.composite(blockColor10.alpha, this.foliageColorBirch, f27 * blockColor10.red, f29 * blockColor10.green, f30 * blockColor10.blue);
+				if(blockColor.tintType == TintType.BIRCH) {
+					pColor.composite(blockColor.alpha, this.foliageColorBirch, f27 * blockColor.red, f29 * blockColor.green, f30 * blockColor.blue);
 					return;
 				}
 
-				if(blockColor10.tintType == TintType.GLASS && tintType6 == TintType.GLASS) {
+				if(blockColor.tintType == TintType.GLASS && tint == TintType.GLASS) {
 					return;
 				}
 
-				pixelColor5.composite(blockColor10.alpha, blockColor10.red * f27, blockColor10.green * f29, blockColor10.blue * f30);
+				pColor.composite(blockColor.alpha, blockColor.red * f27, blockColor.green * f29, blockColor.blue * f30);
 			} else {
-				switch(this.lightmap) {
-				case 1:
-					i11 = i3 < this.worldHeight ? chunk1.getLight(i2, i3 + 1, i4, 0) : 15;
-					break;
-				case 2:
-					i11 = i3 < this.worldHeight ? chunk1.getLight(i2, i3 + 1, i4, 11) : 4;
-					break;
-				case 3:
-					i11 = 15;
-					break;
-				default:
-					this.lightmap = 0;
-				case 0:
-					i11 = i3 < this.worldHeight ? chunk1.getLight(i2, i3 + 1, i4, this.skylightSubtracted) : 15 - this.skylightSubtracted;
-				}
+                i11 = switch (this.lightmap) {
+                    case 1 -> y < this.getWorldHeight() ? chunk.getLight(x, y + 1, z, 0) : 15;
+                    case 2 -> y < this.getWorldHeight() ? chunk.getLight(x, y + 1, z, 11) : 4;
+                    case 3 -> 15;
+                    case 0 -> y < this.getWorldHeight() ? chunk.getLight(x, y + 1, z, this.skylightSubtracted) : 15 - this.skylightSubtracted;
+                    default -> 0;
+                };
 
 				float f12 = this.lightBrightnessTable[i11];
-				if(blockColor10.tintType == TintType.WATER && tintType6 == TintType.WATER) {
+				if(blockColor.tintType == TintType.WATER && tint == TintType.WATER) {
 					return;
 				}
 
 				if(this.environmentColor) {
 					Environment environment13;
 					int i14;
-					switch(blockColor10.tintType) {
+					switch(blockColor.tintType) {
 					case GRASS:
-						environment13 = Environment.getEnvironment(chunk1, i2, i4, thread7);
+						environment13 = Environment.getEnvironment(chunk, x, z, thread);
 						i14 = environment13.getGrassColor();
-						pixelColor5.composite(blockColor10.alpha, i14, f12 * 0.6F);
+						pColor.composite(blockColor.alpha, i14, f12 * 0.6F);
 						return;
 					case TALL_GRASS:
-						long j25 = i2 * 3129871 + i4 * 6129781 + i3;
+						long j25 = x * 3129871L + z * 6129781L + y;
 						j25 = j25 * j25 * 42317861L + j25 * 11L;
-						int i28 = (int)((long)i2 + ((j25 >> 14 & 31L) - 16L));
-						int i16 = (int)((long)i4 + ((j25 >> 24 & 31L) - 16L));
-						int i17 = Environment.getEnvironment(chunk1, i28, i16, thread7).getGrassColor();
-						pixelColor5.composite(blockColor10.alpha, i17, f12 * 0.5F);
+						int i28 = (int)((long)x + ((j25 >> 14 & 31L) - 16L));
+						int i16 = (int)((long)z + ((j25 >> 24 & 31L) - 16L));
+						int i17 = Environment.getEnvironment(chunk, i28, i16, thread).getGrassColor();
+						pColor.composite(blockColor.alpha, i17, f12 * 0.5F);
 						return;
 					case FOLIAGE:
-						environment13 = Environment.getEnvironment(chunk1, i2, i4, thread7);
+						environment13 = Environment.getEnvironment(chunk, x, z, thread);
 						i14 = environment13.getFoliageColor();
-						pixelColor5.composite(blockColor10.alpha, i14, f12 * 0.5F);
+						pColor.composite(blockColor.alpha, i14, f12 * 0.5F);
 						return;
 					default:
 						break;
 					}
 				} else {
-					switch(blockColor10.tintType) {
+					switch(blockColor.tintType) {
 					case GRASS:
-						pixelColor5.composite(blockColor10.alpha, this.grassColor, f12 * blockColor10.red, f12 * blockColor10.green, f12 * blockColor10.blue);
+						pColor.composite(blockColor.alpha, this.grassColor, f12 * blockColor.red, f12 * blockColor.green, f12 * blockColor.blue);
 						return;
 					case TALL_GRASS:
-						pixelColor5.composite(blockColor10.alpha, this.grassColor, f12 * blockColor10.red * 0.9F, f12 * blockColor10.green * 0.9F, f12 * blockColor10.blue * 0.9F);
+						pColor.composite(blockColor.alpha, this.grassColor, f12 * blockColor.red * 0.9F, f12 * blockColor.green * 0.9F, f12 * blockColor.blue * 0.9F);
 						return;
 					case FOLIAGE:
-						pixelColor5.composite(blockColor10.alpha, this.foliageColor, f12 * blockColor10.red, f12 * blockColor10.green, f12 * blockColor10.blue);
+						pColor.composite(blockColor.alpha, this.foliageColor, f12 * blockColor.red, f12 * blockColor.green, f12 * blockColor.blue);
 						return;
 					default:
 						break;
 					}
 				}
 
-				if(blockColor10.tintType == TintType.PINE) {
-					pixelColor5.composite(blockColor10.alpha, this.foliageColorPine, f12 * blockColor10.red, f12 * blockColor10.green, f12 * blockColor10.blue);
+				if(blockColor.tintType == TintType.PINE) {
+					pColor.composite(blockColor.alpha, this.foliageColorPine, f12 * blockColor.red, f12 * blockColor.green, f12 * blockColor.blue);
 					return;
 				}
 
-				if(blockColor10.tintType == TintType.BIRCH) {
-					pixelColor5.composite(blockColor10.alpha, this.foliageColorBirch, f12 * blockColor10.red, f12 * blockColor10.green, f12 * blockColor10.blue);
+				if(blockColor.tintType == TintType.BIRCH) {
+					pColor.composite(blockColor.alpha, this.foliageColorBirch, f12 * blockColor.red, f12 * blockColor.green, f12 * blockColor.blue);
 					return;
 				}
 
-				if(blockColor10.tintType == TintType.GLASS && tintType6 == TintType.GLASS) {
+				if(blockColor.tintType == TintType.GLASS && tint == TintType.GLASS) {
 					return;
 				}
 
-				pixelColor5.composite(blockColor10.alpha, blockColor10.red, blockColor10.green, blockColor10.blue, f12);
+				pColor.composite(blockColor.alpha, blockColor.red, blockColor.green, blockColor.blue, f12);
 			}
 
 		} else {
-			if(i3 > 0) {
-				this.surfaceCalc(chunk1, i2, i3 - 1, i4, pixelColor5, null, thread7);
+			if(y > 0) {
+				this.surfaceCalc(chunk, x, y - 1, z, pColor, null, thread);
 			}
 
 		}
@@ -1480,12 +1360,12 @@ public class ReiMinimap implements Runnable {
 									}
 
 									i10 = this.posY - i9;
-									if(i10 >= 0 && i10 <= this.worldHeight && chunk1.getBlockId(i6, i10, i4) == 0 && chunk1.getLight(i6, i10, i4, 12) != 0) {
+									if(i10 >= 0 && i10 <= this.getWorldHeight() && chunk1.getBlockId(i6, i10, i4) == 0 && chunk1.getLight(i6, i10, i4, 12) != 0) {
 										f8 += temp[i9];
 									}
 
 									i10 = this.posY + i9 + 1;
-									if(i10 >= 0 && i10 <= this.worldHeight && chunk1.getBlockId(i6, i10, i4) == 0 && chunk1.getLight(i6, i10, i4, 12) != 0) {
+									if(i10 >= 0 && i10 <= this.getWorldHeight() && chunk1.getBlockId(i6, i10, i4) == 0 && chunk1.getLight(i6, i10, i4, 12) != 0) {
 										f8 += temp[i9];
 									}
 
@@ -1500,12 +1380,12 @@ public class ReiMinimap implements Runnable {
 									}
 
 									i10 = this.posY - i9;
-									if(i10 > this.worldHeight || i10 >= 0 && chunk1.getBlockId(i6, i10, i4) == 0 && chunk1.getLight(i6, i10, i4, 12) != 0) {
+									if(i10 > this.getWorldHeight() || i10 >= 0 && chunk1.getBlockId(i6, i10, i4) == 0 && chunk1.getLight(i6, i10, i4, 12) != 0) {
 										f8 += temp[i9];
 									}
 
 									i10 = this.posY + i9 + 1;
-									if(i10 > this.worldHeight || i10 >= 0 && chunk1.getBlockId(i6, i10, i4) == 0 && chunk1.getLight(i6, i10, i4, 12) != 0) {
+									if(i10 > this.getWorldHeight() || i10 >= 0 && chunk1.getBlockId(i6, i10, i4) == 0 && chunk1.getLight(i6, i10, i4, 12) != 0) {
 										f8 += temp[i9];
 									}
 
@@ -1517,12 +1397,12 @@ public class ReiMinimap implements Runnable {
 							default:
 								for(i9 = 0; i9 < temp.length; ++i9) {
 									i10 = this.posY - i9;
-									if(i10 < 0 || i10 > this.worldHeight || chunk1.getBlockId(i6, i10, i4) == 0 && chunk1.getLight(i6, i10, i4, 12) != 0) {
+									if(i10 < 0 || i10 > this.getWorldHeight() || chunk1.getBlockId(i6, i10, i4) == 0 && chunk1.getLight(i6, i10, i4, 12) != 0) {
 										f8 += temp[i9];
 									}
 
 									i10 = this.posY + i9 + 1;
-									if(i10 < 0 || i10 > this.worldHeight || chunk1.getBlockId(i6, i10, i4) == 0 && chunk1.getLight(i6, i10, i4, 12) != 0) {
+									if(i10 < 0 || i10 > this.getWorldHeight() || chunk1.getBlockId(i6, i10, i4) == 0 && chunk1.getLight(i6, i10, i4, 12) != 0) {
 										f8 += temp[i9];
 									}
 								}
@@ -1596,8 +1476,8 @@ public class ReiMinimap implements Runnable {
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		GL11.glColorMask(true, true, true, true);
 		double d5 = 0.25D / this.currentZoom;
-		double d7 = (this.thePlayer.x - (double)this.lastX) * 1.0D / 256D;
-		double d9 = (this.thePlayer.z - (double)this.lastZ) * 1.0D / 256D;
+		double d7 = (this.thePlayer.x - (double) this.lastX) / 256D;
+		double d9 = (this.thePlayer.z - (double) this.lastZ) / 256D;
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, this.mapOpacity);
 		this.texture.bind();
 		this.startDrawingQuads();
@@ -1615,8 +1495,7 @@ public class ReiMinimap implements Runnable {
 		float f21;
 		if(this.visibleEntitiesRadar) {
 			d11 = this.useStencil ? 34 : 29;
-            List<Entity> list = new ArrayList<>();
-			list.addAll(this.theWorld.entities);
+            List<Entity> list = new ArrayList<Entity>(this.theWorld.entities);
 			for(Entity entity14 : list) {
 				if(entity14 != null) {
 					i16 = this.getEntityColor(entity14);
@@ -1760,7 +1639,7 @@ public class ReiMinimap implements Runnable {
 			GLTexture.MMARROW.bind();
 			GL11.glRotatef(this.notchDirection ? 0.0F : -90.0F, 0.0F, 0.0F, 1.0F);
 			this.drawCenteringRectangle(0.0D, 0.0D, 1.0D, 8.0D, 8.0D);
-		} catch (Exception exception53) {
+		} catch (Exception ignored) {
 		} finally {
 			GL11.glPopMatrix();
 		}
@@ -1772,7 +1651,7 @@ public class ReiMinimap implements Runnable {
 		int i56;
 		int i59;
 		if(i16 > 0) {
-			string48 = String.format("%2.2fx", new Object[]{this.currentZoom});
+			string48 = String.format("%2.2fx", this.currentZoom);
 			int i49 = fontRenderer46.getWidth(string48);
 			if(i16 > 255) {
 				i16 = 255;
@@ -1811,11 +1690,11 @@ public class ReiMinimap implements Runnable {
 				i56 = MathHelper.floor(this.thePlayer.x);
 				i59 = MathHelper.floor(this.thePlayer.boundingBox.minY);
 				int i60 = MathHelper.floor(this.thePlayer.z);
-				string52 = String.format("%+d, %+d", new Object[]{i56, i60});
+				string52 = String.format("%+d, %+d", i56, i60);
 				string57 = Integer.toString(i59);
 			} else {
-				string52 = String.format("%+1.2f, %+1.2f", new Object[]{this.thePlayer.x, this.thePlayer.z});
-				string57 = String.format("%1.2f (%d)", new Object[]{this.thePlayer.y, (int)this.thePlayer.boundingBox.minY});
+				string52 = String.format("%+1.2f, %+1.2f", this.thePlayer.x, this.thePlayer.z);
+				string57 = String.format("%1.2f (%d)", this.thePlayer.y, (int)this.thePlayer.boundingBox.minY);
 			}
 
 			f20 = (float)fontRenderer46.getWidth(string52) * 0.5F * (float)i2;
@@ -1838,7 +1717,7 @@ public class ReiMinimap implements Runnable {
 		}
 
 		if(this.showMenuKey) {
-			string52 = String.format("Menu: %s key", new Object[]{KeyInput.MENU_KEY.getKeyName()});
+			string52 = String.format("Menu: %s key", KeyInput.MENU_KEY.getKeyName());
 			f53 = (float)this.theMinecraft.textRenderer.getWidth(string52) * 0.5F * (float)i2;
 			f20 = (float)(32 * i1) - f53;
 			if((this.mapPosition & 2) == 0 && (float)(32 * i1) < f53) {
@@ -1912,8 +1791,8 @@ public class ReiMinimap implements Runnable {
 		GL11.glColorMask(true, true, true, true);
 		GL11.glDepthMask(true);
 		double d5 = 0.25D / this.currentZoom;
-		double d7 = (this.thePlayer.x - (double)this.lastX) * 1.0D / 256D;
-		double d9 = (this.thePlayer.z - (double)this.lastZ) * 1.0D / 256D;
+		double d7 = (this.thePlayer.x - (double) this.lastX) / 256D;
+		double d9 = (this.thePlayer.z - (double) this.lastZ) / 256D;
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, this.mapOpacity);
 		this.texture.bind();
 		this.startDrawingQuads();
@@ -1931,7 +1810,6 @@ public class ReiMinimap implements Runnable {
 
 		this.draw();
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-		Iterator iterator14;
 		int i15;
 		double d17;
 		double d20;
@@ -1940,13 +1818,9 @@ public class ReiMinimap implements Runnable {
 		double d78;
 		if(this.visibleEntitiesRadar) {
 			float f11 = (float)(this.useStencil ? 34 : 31);
-			ArrayList arrayList12 = new ArrayList();
-			arrayList12.addAll(this.theWorld.entities);
-			iterator14 = arrayList12.iterator();
+			ArrayList<Entity> arrayList12 = new ArrayList<Entity>(this.theWorld.entities);
 
-			Entity entity13;
-			while(iterator14.hasNext()) {
-				entity13 = (Entity)iterator14.next();
+			for(Entity entity13 : arrayList12) {
 				if(entity13 != null) {
 					i15 = this.getEntityColor(entity13);
 					if(i15 != 0) {
@@ -2000,10 +1874,9 @@ public class ReiMinimap implements Runnable {
 			}
 
 			if(this.configEntityLightning) {
-				iterator14 = this.theWorld.globalEntities.iterator();
+				List<Entity> entites = this.theWorld.globalEntities;
 
-				while(iterator14.hasNext()) {
-					entity13 = (Entity)iterator14.next();
+				for(Entity entity13 : entites) {
 					if(entity13 instanceof LightningEntity) {
 						d65 = this.thePlayer.x - entity13.x;
 						d17 = this.thePlayer.z - entity13.z;
@@ -2016,15 +1889,12 @@ public class ReiMinimap implements Runnable {
 							if(d19 < (double)f11) {
 								float f21 = (float)Math.max(0.2F, 1.0D - Math.abs(this.thePlayer.y - entity13.y) * 0.04D);
 								GL11.glColor4f(1.0F, 1.0F, 1.0F, f21);
-								float f10000;
 								if(this.notchDirection) {
 									d77 = -d65;
 									d78 = -d17;
-									f10000 = entity13.yaw + 180.0F;
 								} else {
 									d77 = d17;
 									d78 = -d65;
-									f10000 = entity13.yaw - 90.0F;
 								}
 
 								GLTexture.LIGHTNING.bind();
@@ -2051,44 +1921,42 @@ public class ReiMinimap implements Runnable {
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 		if(this.visibleWaypoints) {
 			double d58 = this.getVisibleDimensionScale();
-			iterator14 = this.wayPts.iterator();
 
-			while(iterator14.hasNext()) {
-				Waypoint waypoint61 = (Waypoint)iterator14.next();
-				if(waypoint61.enable) {
-					d65 = this.thePlayer.x - (double)waypoint61.x * d58 - 0.5D;
-					d17 = this.thePlayer.z - (double)waypoint61.z * d58 - 0.5D;
-					d65 = d65 * this.currentZoom * 0.5D;
-					d17 = d17 * this.currentZoom * 0.5D;
-					float f75 = (float)Math.toDegrees(Math.atan2(d65, d17));
-					d20 = Math.max(Math.abs(d65), Math.abs(d17));
+            for (Waypoint waypoint61 : this.wayPts) {
+                if (waypoint61.enable) {
+                    d65 = this.thePlayer.x - (double) waypoint61.x * d58 - 0.5D;
+                    d17 = this.thePlayer.z - (double) waypoint61.z * d58 - 0.5D;
+                    d65 = d65 * this.currentZoom * 0.5D;
+                    d17 = d17 * this.currentZoom * 0.5D;
+                    float f75 = (float) Math.toDegrees(Math.atan2(d65, d17));
+                    d20 = Math.max(Math.abs(d65), Math.abs(d17));
 
-					try {
-						GL11.glPushMatrix();
-						if(d20 < 31.0D) {
-							GL11.glColor4f(waypoint61.red, waypoint61.green, waypoint61.blue, (float)Math.min(1.0D, Math.max(0.4D, (d20 - 1.0D) * 0.5D)));
-							Waypoint.FILE[waypoint61.type].bind();
-							if(this.notchDirection) {
-								this.drawCenteringRectangle(-d65, -d17, 1.0D, 8.0D, 8.0D);
-							} else {
-								this.drawCenteringRectangle(d17, -d65, 1.0D, 8.0D, 8.0D);
-							}
-						} else {
-							d77 = 34.0D / d20;
-							d65 *= d77;
-							d17 *= d77;
-							d78 = Math.sqrt(d65 * d65 + d17 * d17);
-							GL11.glColor3f(waypoint61.red, waypoint61.green, waypoint61.blue);
-							Waypoint.MARKER[waypoint61.type].bind();
-							GL11.glRotatef((this.notchDirection ? 0.0F : 90.0F) - f75, 0.0F, 0.0F, 1.0F);
-							GL11.glTranslated(0.0D, -d78, 0.0D);
-							this.drawCenteringRectangle(0.0D, 0.0D, 1.0D, 8.0D, 8.0D);
-						}
-					} finally {
-						GL11.glPopMatrix();
-					}
-				}
-			}
+                    try {
+                        GL11.glPushMatrix();
+                        if (d20 < 31.0D) {
+                            GL11.glColor4f(waypoint61.red, waypoint61.green, waypoint61.blue, (float) Math.min(1.0D, Math.max(0.4D, (d20 - 1.0D) * 0.5D)));
+                            Waypoint.FILE[waypoint61.type].bind();
+                            if (this.notchDirection) {
+                                this.drawCenteringRectangle(-d65, -d17, 1.0D, 8.0D, 8.0D);
+                            } else {
+                                this.drawCenteringRectangle(d17, -d65, 1.0D, 8.0D, 8.0D);
+                            }
+                        } else {
+                            d77 = 34.0D / d20;
+                            d65 *= d77;
+                            d17 *= d77;
+                            d78 = Math.sqrt(d65 * d65 + d17 * d17);
+                            GL11.glColor3f(waypoint61.red, waypoint61.green, waypoint61.blue);
+                            Waypoint.MARKER[waypoint61.type].bind();
+                            GL11.glRotatef((this.notchDirection ? 0.0F : 90.0F) - f75, 0.0F, 0.0F, 1.0F);
+                            GL11.glTranslated(0.0D, -d78, 0.0D);
+                            this.drawCenteringRectangle(0.0D, 0.0D, 1.0D, 8.0D, 8.0D);
+                        }
+                    } finally {
+                        GL11.glPopMatrix();
+                    }
+                }
+            }
 		}
 
 		GL11.glColor3f(1.0F, 1.0F, 1.0F);
@@ -2107,7 +1975,7 @@ public class ReiMinimap implements Runnable {
 			GLTexture.MMARROW.bind();
 			GL11.glRotatef(this.thePlayer.yaw - (this.notchDirection ? 180.0F : 90.0F), 0.0F, 0.0F, 1.0F);
 			this.drawCenteringRectangle(0.0D, 0.0D, 1.0D, 8.0D, 8.0D);
-		} catch (Exception exception53) {
+		} catch (Exception ignored) {
 		} finally {
 			GL11.glPopMatrix();
 		}
@@ -2119,7 +1987,7 @@ public class ReiMinimap implements Runnable {
 		int i68;
 		int i72;
 		if(i60 > 0) {
-			string62 = String.format("%2.2fx", new Object[]{this.currentZoom});
+			string62 = String.format("%2.2fx", this.currentZoom);
 			int i64 = fontRenderer59.getWidth(string62);
 			if(i60 > 255) {
 				i60 = 255;
@@ -2160,11 +2028,11 @@ public class ReiMinimap implements Runnable {
 				i68 = MathHelper.floor(this.thePlayer.x);
 				i72 = MathHelper.floor(this.thePlayer.boundingBox.minY);
 				int i73 = MathHelper.floor(this.thePlayer.z);
-				string67 = String.format("%+d, %+d", new Object[]{i68, i73});
+				string67 = String.format("%+d, %+d", i68, i73);
 				string71 = Integer.toString(i72);
 			} else {
-				string67 = String.format("%+1.2f, %+1.2f", new Object[]{this.thePlayer.x, this.thePlayer.z});
-				string71 = String.format("%1.2f (%d)", new Object[]{this.thePlayer.y, (int)this.thePlayer.boundingBox.minY});
+				string67 = String.format("%+1.2f, %+1.2f", this.thePlayer.x, this.thePlayer.z);
+				string71 = String.format("%1.2f (%d)", this.thePlayer.y, (int)this.thePlayer.boundingBox.minY);
 			}
 
 			f70 = (float)fontRenderer59.getWidth(string67) * 0.5F * (float)i2;
@@ -2187,7 +2055,7 @@ public class ReiMinimap implements Runnable {
 		}
 
 		if(this.showMenuKey) {
-			string67 = String.format("Menu: %s key", new Object[]{KeyInput.MENU_KEY.getKeyName()});
+			string67 = String.format("Menu: %s key", KeyInput.MENU_KEY.getKeyName());
 			f69 = (float)this.theMinecraft.textRenderer.getWidth(string67) * 0.5F * (float)i2;
 			f70 = (float)(32 * i1) - f69;
 			if((this.mapPosition & 2) == 0 && (float)(32 * i1) < f69) {
@@ -2211,9 +2079,11 @@ public class ReiMinimap implements Runnable {
 		if(this.largeMapScale == 0) {
 			i1 = this.scaledResolution.scaleFactor;
 		} else {
-			for(i2 = this.largeMapScale == 1 ? 1000 : this.largeMapScale - 1; i1 < i2 && this.scWidth >= (i1 + 1) * 240 && this.scHeight >= (i1 + 1) * 240; ++i1) {
-			}
-		}
+            i2 = this.largeMapScale == 1 ? 1000 : this.largeMapScale - 1;
+            while (i1 < i2 && this.scWidth >= (i1 + 1) * 240 && this.scHeight >= (i1 + 1) * 240) {
+                ++i1;
+            }
+        }
 
 		i2 = this.fontScale - 1;
 		if(this.fontScale == 0) {
@@ -2225,8 +2095,8 @@ public class ReiMinimap implements Runnable {
 		GL11.glTranslated((double)this.scWidth * 0.5D, (double)this.scHeight * 0.5D, 0.0D);
 		GL11.glScalef((float)i1, (float)i1, 0.0F);
 		double d3 = 0.234375D / this.currentZoom;
-		double d5 = (this.thePlayer.x - (double)this.lastX) * 1.0D / 256D;
-		double d7 = (this.thePlayer.z - (double)this.lastZ) * 1.0D / 256D;
+		double d5 = (this.thePlayer.x - (double) this.lastX) / 256D;
+		double d7 = (this.thePlayer.z - (double) this.lastZ) / 256D;
 		GL11.glEnable(GL11.GL_BLEND);
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		GL11.glDepthMask(false);
@@ -2255,13 +2125,9 @@ public class ReiMinimap implements Runnable {
 		float f18;
 		float f19;
 		if(this.visibleEntitiesRadar) {
-			ArrayList arrayList9 = new ArrayList();
-			arrayList9.addAll(this.theWorld.entities);
-			Iterator iterator11 = arrayList9.iterator();
+			ArrayList<Entity> arrayList9 = new ArrayList<Entity>(this.theWorld.entities);
 
-			Entity entity10;
-			while(iterator11.hasNext()) {
-				entity10 = (Entity)iterator11.next();
+			for(Entity entity10 : arrayList9) {
 				if(entity10 != null) {
 					i12 = this.getEntityColor(entity10);
 					if(i12 != 0) {
@@ -2315,10 +2181,9 @@ public class ReiMinimap implements Runnable {
 			}
 
 			if(this.configEntityLightning) {
-				iterator11 = this.theWorld.globalEntities.iterator();
+				List<Entity> entities = this.theWorld.globalEntities;
 
-				while(iterator11.hasNext()) {
-					entity10 = (Entity)iterator11.next();
+				for(Entity entity10 : entities) {
 					if(entity10 instanceof LightningEntity) {
 						double d66 = this.thePlayer.x - entity10.x;
 						double d14 = this.thePlayer.z - entity10.z;
@@ -2331,17 +2196,14 @@ public class ReiMinimap implements Runnable {
 							if(d16 < 114.0D) {
 								f18 = (float)Math.max(0.2F, 1.0D - Math.abs(this.thePlayer.y - entity10.y) * 0.04D);
 								GL11.glColor4f(1.0F, 1.0F, 1.0F, f18);
-								float f10000;
 								double d77;
 								double d79;
 								if(this.notchDirection) {
 									d77 = -d66;
 									d79 = -d14;
-									f10000 = entity10.yaw + 180.0F;
 								} else {
 									d77 = d14;
 									d79 = -d66;
-									f10000 = entity10.yaw - 90.0F;
 								}
 
 								GLTexture.LIGHTNING.bind();
@@ -2370,77 +2232,75 @@ public class ReiMinimap implements Runnable {
 			GLTexture.MMARROW.bind();
 			GL11.glRotatef(this.thePlayer.yaw - (this.notchDirection ? 180.0F : 90.0F), 0.0F, 0.0F, 1.0F);
 			this.drawCenteringRectangle(0.0D, 0.0D, 1.0D, 8.0D, 8.0D);
-		} catch (Exception exception53) {
+		} catch (Exception ignored) {
 		} finally {
 			GL11.glPopMatrix();
 		}
 
 		float f75;
 		if(this.visibleWaypoints) {
-			Iterator iterator59 = this.wayPts.iterator();
 
-			while(iterator59.hasNext()) {
-				Waypoint waypoint57 = (Waypoint)iterator59.next();
-				double d62 = this.getVisibleDimensionScale();
-				if(waypoint57.enable) {
-					d13 = this.thePlayer.x - (double)waypoint57.x * d62 - 0.5D;
-					d15 = this.thePlayer.z - (double)waypoint57.z * d62 - 0.5D;
-					d13 = d13 * this.currentZoom * 2.0D;
-					d15 = d15 * this.currentZoom * 2.0D;
-					f75 = (float)Math.toDegrees(Math.atan2(d13, d15));
-					double d76 = Math.max(Math.abs(d13), Math.abs(d15));
+            for (Waypoint waypoint57 : this.wayPts) {
+                double d62 = this.getVisibleDimensionScale();
+                if (waypoint57.enable) {
+                    d13 = this.thePlayer.x - (double) waypoint57.x * d62 - 0.5D;
+                    d15 = this.thePlayer.z - (double) waypoint57.z * d62 - 0.5D;
+                    d13 = d13 * this.currentZoom * 2.0D;
+                    d15 = d15 * this.currentZoom * 2.0D;
+                    f75 = (float) Math.toDegrees(Math.atan2(d13, d15));
+                    double d76 = Math.max(Math.abs(d13), Math.abs(d15));
 
-					try {
-						GL11.glPushMatrix();
-						double d78;
-						double d80;
-						if(d76 < 114.0D) {
-							GL11.glColor4f(waypoint57.red, waypoint57.green, waypoint57.blue, (float)Math.min(1.0D, Math.max(0.4D, (d76 - 1.0D) * 0.5D)));
-							Waypoint.FILE[waypoint57.type].bind();
-							if(this.notchDirection) {
-								d78 = -d13;
-								d80 = -d15;
-							} else {
-								d78 = d15;
-								d80 = -d13;
-							}
+                    try {
+                        GL11.glPushMatrix();
+                        double d78;
+                        double d80;
+                        if (d76 < 114.0D) {
+                            GL11.glColor4f(waypoint57.red, waypoint57.green, waypoint57.blue, (float) Math.min(1.0D, Math.max(0.4D, (d76 - 1.0D) * 0.5D)));
+                            Waypoint.FILE[waypoint57.type].bind();
+                            if (this.notchDirection) {
+                                d78 = -d13;
+                                d80 = -d15;
+                            } else {
+                                d78 = d15;
+                                d80 = -d13;
+                            }
 
-							this.drawCenteringRectangle(d78, d80, 1.0D, 8.0D, 8.0D);
-							if(this.largeMapLabel && waypoint57.name != null && !waypoint57.name.isEmpty()) {
-								GL11.glDisable(GL11.GL_TEXTURE_2D);
-								GL11.glColor4f(0.0F, 0.0F, 0.0F, 0.627451F);
-								int i81 = this.theMinecraft.textRenderer.getWidth(waypoint57.name);
-								int i25 = (int)d78;
-								int i82 = (int)d80;
-								int i27 = i25 - (i81 >> 1);
-								int i83 = i27 + i81;
-								int i29 = i82 - 15;
-								int i30 = i82 - 5;
-								this.tessellator.startQuads();
-								this.tessellator.vertex(i27 - 1, i30, 1.0D);
-								this.tessellator.vertex(i83 + 1, i30, 1.0D);
-								this.tessellator.vertex(i83 + 1, i29, 1.0D);
-								this.tessellator.vertex(i27 - 1, i29, 1.0D);
-								this.tessellator.draw();
-								GL11.glEnable(GL11.GL_TEXTURE_2D);
-								this.theMinecraft.textRenderer.drawWithShadow(waypoint57.name, i27, i29 + 1, waypoint57.type == 0 ? -1 : -65536);
-							}
-						} else {
-							d78 = 117.0D / d76;
-							d13 *= d78;
-							d15 *= d78;
-							d80 = Math.sqrt(d13 * d13 + d15 * d15);
-							GL11.glColor3f(waypoint57.red, waypoint57.green, waypoint57.blue);
-							Waypoint.MARKER[waypoint57.type].bind();
-							GL11.glRotatef((this.notchDirection ? 0.0F : 90.0F) - f75, 0.0F, 0.0F, 1.0F);
-							GL11.glTranslated(0.0D, -d80, 0.0D);
-							this.drawCenteringRectangle(0.0D, 0.0D, 1.0D, 8.0D, 8.0D);
-						}
-					} finally {
-						GL11.glPopMatrix();
-					}
-				}
-			}
+                            this.drawCenteringRectangle(d78, d80, 1.0D, 8.0D, 8.0D);
+                            if (this.largeMapLabel && waypoint57.name != null && !waypoint57.name.isEmpty()) {
+                                GL11.glDisable(GL11.GL_TEXTURE_2D);
+                                GL11.glColor4f(0.0F, 0.0F, 0.0F, 0.627451F);
+                                int i81 = this.theMinecraft.textRenderer.getWidth(waypoint57.name);
+                                int i25 = (int) d78;
+                                int i82 = (int) d80;
+                                int i27 = i25 - (i81 >> 1);
+                                int i83 = i27 + i81;
+                                int i29 = i82 - 15;
+                                int i30 = i82 - 5;
+                                this.tessellator.startQuads();
+                                this.tessellator.vertex(i27 - 1, i30, 1.0D);
+                                this.tessellator.vertex(i83 + 1, i30, 1.0D);
+                                this.tessellator.vertex(i83 + 1, i29, 1.0D);
+                                this.tessellator.vertex(i27 - 1, i29, 1.0D);
+                                this.tessellator.draw();
+                                GL11.glEnable(GL11.GL_TEXTURE_2D);
+                                this.theMinecraft.textRenderer.drawWithShadow(waypoint57.name, i27, i29 + 1, waypoint57.type == 0 ? -1 : -65536);
+                            }
+                        } else {
+                            d78 = 117.0D / d76;
+                            d13 *= d78;
+                            d15 *= d78;
+                            d80 = Math.sqrt(d13 * d13 + d15 * d15);
+                            GL11.glColor3f(waypoint57.red, waypoint57.green, waypoint57.blue);
+                            Waypoint.MARKER[waypoint57.type].bind();
+                            GL11.glRotatef((this.notchDirection ? 0.0F : 90.0F) - f75, 0.0F, 0.0F, 1.0F);
+                            GL11.glTranslated(0.0D, -d80, 0.0D);
+                            this.drawCenteringRectangle(0.0D, 0.0D, 1.0D, 8.0D, 8.0D);
+                        }
+                    } finally {
+                        GL11.glPopMatrix();
+                    }
+                }
+            }
 		}
 
 		int i70;
@@ -2494,8 +2354,6 @@ public class ReiMinimap implements Runnable {
 			GL11.glTranslated((double)this.scWidth * 0.5D, (double)this.scHeight * 0.5D, 0.0D);
 			GL11.glScaled(i1, i1, 1.0D);
 			GL11.glEnable(GL11.GL_TEXTURE_2D);
-		} else if(this.renderType != 2) {
-			;
 		}
 
 		GL11.glScalef(1.0F / (float)i1, 1.0F / (float)i1, 1.0F);
@@ -2523,11 +2381,11 @@ public class ReiMinimap implements Runnable {
 				i12 = MathHelper.floor(this.thePlayer.x);
 				i70 = MathHelper.floor(this.thePlayer.boundingBox.minY);
 				int i72 = MathHelper.floor(this.thePlayer.z);
-				string63 = String.format("%+d, %+d", new Object[]{i12, i72});
+				string63 = String.format("%+d, %+d", i12, i72);
 				string68 = Integer.toString(i70);
 			} else {
-				string63 = String.format("%+1.2f, %+1.2f", new Object[]{this.thePlayer.x, this.thePlayer.z});
-				string68 = String.format("%1.2f (%d)", new Object[]{this.thePlayer.y, (int)this.thePlayer.boundingBox.minY});
+				string63 = String.format("%+1.2f, %+1.2f", this.thePlayer.x, this.thePlayer.z);
+				string68 = String.format("%1.2f (%d)", this.thePlayer.y, (int)this.thePlayer.boundingBox.minY);
 			}
 
 			fontRenderer60.drawWithShadow(string63, (int)((float)fontRenderer60.getWidth(string63) * -0.5F), 2, 0xFFFFFF);
@@ -2923,18 +2781,18 @@ public class ReiMinimap implements Runnable {
 		}
 	}
 
-	void saveOptions() {
+	public void saveOptions() {
 		File file1 = new File(directory, "option.txt");
 
 		try {
-			PrintWriter printWriter2 = new PrintWriter(file1, "UTF-8");
+			PrintWriter printWriter2 = new PrintWriter(file1, StandardCharsets.UTF_8);
 			EnumOption[] enumOption6;
 			int i5 = (enumOption6 = EnumOption.values()).length;
 
 			for(int i4 = 0; i4 < i5; ++i4) {
 				EnumOption enumOption3 = enumOption6[i4];
 				if(enumOption3 != EnumOption.DIRECTION_TYPE && this.getOption(enumOption3) != EnumOptionValue.SUB_OPTION && this.getOption(enumOption3) != EnumOptionValue.VERSION && this.getOption(enumOption3) != EnumOptionValue.AUTHOR) {
-					printWriter2.printf("%s: %s%n", new Object[]{capitalize(enumOption3.toString()), capitalize(this.getOption(enumOption3).toString())});
+					printWriter2.printf("%s: %s%n", capitalize(enumOption3.toString()), capitalize(this.getOption(enumOption3).toString()));
 				}
 			}
 
@@ -2952,7 +2810,7 @@ public class ReiMinimap implements Runnable {
 			boolean z2 = false;
 
 			try {
-				Scanner scanner3 = new Scanner(file1, "UTF-8");
+				Scanner scanner3 = new Scanner(file1, StandardCharsets.UTF_8);
 
 				while(scanner3.hasNextLine()) {
 					try {
@@ -2977,68 +2835,58 @@ public class ReiMinimap implements Runnable {
 		}
 	}
 
-	public List getWaypoints() {
+	public List<Waypoint> getWaypoints() {
 		return this.wayPts;
 	}
 
-	void saveWaypoints() {
+	public void saveWaypoints() {
 		File file1 = new File(directory, this.currentLevelName + ".DIM" + this.waypointDimension + ".points");
 		if(file1.isDirectory()) {
-			this.chatInfo("§E[Rei\'s Minimap] Error Saving Waypoints");
-			error("[Rei\'s Minimap] Error Saving Waypoints: (" + file1 + ") is directory.");
+			this.chatInfo("§E[Rei's Minimap] Error Saving Waypoints");
+			error("[Rei's Minimap] Error Saving Waypoints: (" + file1 + ") is directory.");
 		} else {
 			try {
-				PrintWriter printWriter2 = new PrintWriter(file1, "UTF-8");
-				Iterator iterator4 = this.wayPts.iterator();
+				PrintWriter printWriter2 = new PrintWriter(file1, StandardCharsets.UTF_8);
 
-				while(iterator4.hasNext()) {
-					Waypoint waypoint3 = (Waypoint)iterator4.next();
-					printWriter2.println(waypoint3);
-				}
+                for (Waypoint waypoint3 : this.wayPts) {
+                    printWriter2.println(waypoint3);
+                }
 
 				printWriter2.flush();
 				printWriter2.close();
 			} catch (Exception exception5) {
-				this.chatInfo("§E[Rei\'s Minimap] Error Saving Waypoints");
+				this.chatInfo("§E[Rei's Minimap] Error Saving Waypoints");
 				error("Error Saving Waypoints", exception5);
 			}
 
 		}
 	}
 
-	void loadWaypoints() {
+	public void loadWaypoints() {
 		this.wayPts = null;
 		this.wayPtsMap.clear();
 		Pattern pattern1 = Pattern.compile(Pattern.quote(this.currentLevelName) + "\\.DIM(-?[0-9])\\.points");
 		int i2 = 0;
-		String[] string6;
-		int i5 = (string6 = directory.list()).length;
+		String[] string6 = directory.list();
+		int i5 = string6 == null ? 0 : string6.length;
 
 		for(int i4 = 0; i4 < i5; ++i4) {
 			String string3 = string6[i4];
 			Matcher matcher7 = pattern1.matcher(string3);
 			if(matcher7.matches()) {
 				int i8 = Integer.parseInt(matcher7.group(1));
-				ArrayList arrayList9 = new ArrayList();
-				Scanner scanner10 = null;
+				ArrayList<Waypoint> arrayList9 = new ArrayList<>();
 
-				try {
-					scanner10 = new Scanner(new File(directory, string3), "UTF-8");
-
-					while(scanner10.hasNextLine()) {
-						Waypoint waypoint11 = Waypoint.load(scanner10.nextLine());
-						if(waypoint11 != null) {
-							arrayList9.add(waypoint11);
-							++i2;
-						}
-					}
-				} catch (Exception exception15) {
-				} finally {
-					if(scanner10 != null) {
-						scanner10.close();
-					}
-
-				}
+                try (Scanner scanner10 = new Scanner(new File(directory, string3), StandardCharsets.UTF_8)) {
+                    while (scanner10.hasNextLine()) {
+                        Waypoint waypoint11 = Waypoint.load(scanner10.nextLine());
+                        if (waypoint11 != null) {
+                            arrayList9.add(waypoint11);
+                            ++i2;
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
 
 				this.wayPtsMap.put(i8, arrayList9);
 				if(i8 == this.currentDimension) {
@@ -3048,11 +2896,11 @@ public class ReiMinimap implements Runnable {
 		}
 
 		if(this.wayPts == null) {
-			this.wayPts = new ArrayList();
+			this.wayPts = new ArrayList<>();
 		}
 
 		if(i2 != 0) {
-			this.chatInfo("§E[Rei\'s Minimap] " + i2 + " Waypoints loaded for " + this.currentLevelName);
+			this.chatInfo("§E[Rei's Minimap] " + i2 + " Waypoints loaded for " + this.currentLevelName);
 		}
 
 	}
@@ -3180,87 +3028,67 @@ public class ReiMinimap implements Runnable {
 		return guiScreen0 == null || guiScreen0 instanceof GuiScreenInterface || guiScreen0 instanceof ChatScreen || guiScreen0 instanceof DeathScreen;
 	}
 
-	String getDimensionName(int i1) {
+	public String getDimensionName(int i1) {
 		String string2 = this.dimensionName.get(i1);
 		return string2 == null ? "DIM:" + i1 : string2;
 	}
 
-	int getWaypointDimension() {
+	public int getWaypointDimension() {
 		return this.waypointDimension;
 	}
 
-	int getCurrentDimension() {
+	public int getCurrentDimension() {
 		return this.currentDimension;
 	}
 
 	private double getDimensionScale(int i1) {
 		Double double2 = this.dimensionScale.get(i1);
-		return double2 == null ? 1.0D : double2.doubleValue();
+		return double2 == null ? 1.0D : double2;
 	}
 
-	double getVisibleDimensionScale() {
+	public double getVisibleDimensionScale() {
 		return this.getDimensionScale(this.waypointDimension) / this.getDimensionScale(this.currentDimension);
 	}
 
-	void prevDimension() {
-		Entry map$Entry1 = this.wayPtsMap.lowerEntry(this.waypointDimension);
-		if(map$Entry1 == null) {
-			map$Entry1 = this.wayPtsMap.lowerEntry(Integer.MAX_VALUE);
+	public void prevDimension() {
+		Entry<Integer, List<Waypoint>> entry = this.wayPtsMap.lowerEntry(this.waypointDimension);
+		if(entry == null) {
+			entry = this.wayPtsMap.lowerEntry(Integer.MAX_VALUE);
 		}
 
-		if(map$Entry1 != null) {
-			this.waypointDimension = ((Integer)map$Entry1.getKey()).intValue();
-			this.wayPts = (List)map$Entry1.getValue();
-		}
-
-	}
-
-	void nextDimension() {
-		Entry map$Entry1 = this.wayPtsMap.higherEntry(this.waypointDimension);
-		if(map$Entry1 == null) {
-			map$Entry1 = this.wayPtsMap.higherEntry(Integer.MIN_VALUE);
-		}
-
-		if(map$Entry1 != null) {
-			this.waypointDimension = ((Integer)map$Entry1.getKey()).intValue();
-			this.wayPts = (List)map$Entry1.getValue();
+		if(entry != null) {
+			this.waypointDimension = entry.getKey();
+			this.wayPts = entry.getValue();
 		}
 
 	}
 
-	private static Map createObfuscatorFieldMap() {
-		HashMap map = new HashMap();
-		/*hashMap0.put("worldHeight", "d");
-		hashMap0.put("chatMessageList", "e");
-		hashMap0.put("worldInfo", "s");
-		hashMap0.put("levelName", "j");
-		hashMap0.put("sendQueue", "cl");
-		hashMap0.put("netManager", "g");
-		hashMap0.put("remoteSocketAddress", "i");*/
+	public void nextDimension() {
+		Entry<Integer, List<Waypoint>> entry = this.wayPtsMap.higherEntry(this.waypointDimension);
+		if(entry == null) {
+			entry = this.wayPtsMap.higherEntry(Integer.MIN_VALUE);
+		}
 
-		map.put("chatMessageList", "e");
-		map.put("worldInfo", "s");
-		map.put("levelName", "j");
-		map.put("sendQueue", "bJ");
-		map.put("netManager", "d");
-		map.put("remoteSocketAddress", "g");
-		map.put("dimension", "p");
-		return Collections.unmodifiableMap(map);
+		if(entry != null) {
+			this.waypointDimension = entry.getKey();
+			this.wayPts = entry.getValue();
+		}
+
 	}
 
-	private static final void error(String string0, Exception exception1) {
+	private static void error(String string0, Exception exception1) {
 		File file2 = new File(directory, "error.txt");
 		PrintWriter printWriter3 = null;
 
 		try {
 			FileOutputStream fileOutputStream4 = new FileOutputStream(file2, true);
-			printWriter3 = new PrintWriter(new OutputStreamWriter(fileOutputStream4, "UTF-8"));
+			printWriter3 = new PrintWriter(new OutputStreamWriter(fileOutputStream4, StandardCharsets.UTF_8));
 			information(printWriter3);
 			printWriter3.println(string0);
 			exception1.printStackTrace(printWriter3);
 			printWriter3.println();
 			printWriter3.flush();
-		} catch (Exception exception8) {
+		} catch (Exception ignored) {
 		} finally {
 			if(printWriter3 != null) {
 				printWriter3.close();
@@ -3270,18 +3098,18 @@ public class ReiMinimap implements Runnable {
 
 	}
 
-	private static final void error(String string0) {
+	private static void error(String string0) {
 		File file1 = new File(directory, "error.txt");
 		PrintWriter printWriter2 = null;
 
 		try {
 			FileOutputStream fileOutputStream3 = new FileOutputStream(file1, true);
-			printWriter2 = new PrintWriter(new OutputStreamWriter(fileOutputStream3, "UTF-8"));
+			printWriter2 = new PrintWriter(new OutputStreamWriter(fileOutputStream3, StandardCharsets.UTF_8));
 			information(printWriter2);
 			printWriter2.println(string0);
 			printWriter2.println();
 			printWriter2.flush();
-		} catch (Exception exception7) {
+		} catch (Exception ignored) {
 		} finally {
 			if(printWriter2 != null) {
 				printWriter2.close();
@@ -3291,31 +3119,27 @@ public class ReiMinimap implements Runnable {
 
 	}
 
-	private static final void information(PrintWriter printWriter0) {
-		printWriter0.printf("--- %1$tF %1$tT %1$tZ ---%n", new Object[]{System.currentTimeMillis()});
-		printWriter0.printf("Rei\'s Minimap %s [%s]%n", new Object[]{"v3.0_01", "1.1"});
-		printWriter0.printf("OS: %s (%s) version %s%n", new Object[]{System.getProperty("os.name"), System.getProperty("os.arch"), System.getProperty("os.version")});
-		printWriter0.printf("Java: %s, %s%n", new Object[]{System.getProperty("java.version"), System.getProperty("java.vendor")});
-		printWriter0.printf("VM: %s (%s), %s%n", new Object[]{System.getProperty("java.vm.name"), System.getProperty("java.vm.info"), System.getProperty("java.vm.vendor")});
-		printWriter0.printf("LWJGL: %s%n", new Object[]{Sys.getVersion()});
-		printWriter0.printf("OpenGL: %s version %s, %s%n", new Object[]{GL11.glGetString(GL11.GL_RENDERER), GL11.glGetString(GL11.GL_VERSION), GL11.glGetString(GL11.GL_VENDOR)});
+	private static void information(PrintWriter printWriter0) {
+		printWriter0.printf("--- %1$tF %1$tT %1$tZ ---%n", System.currentTimeMillis());
+		printWriter0.printf("Rei's Minimap %s [%s]%n", "v3.0_01", "1.1");
+		printWriter0.printf("OS: %s (%s) version %s%n", System.getProperty("os.name"), System.getProperty("os.arch"), System.getProperty("os.version"));
+		printWriter0.printf("Java: %s, %s%n", System.getProperty("java.version"), System.getProperty("java.vendor"));
+		printWriter0.printf("VM: %s (%s), %s%n", System.getProperty("java.vm.name"), System.getProperty("java.vm.info"), System.getProperty("java.vm.vendor"));
+		printWriter0.printf("LWJGL: %s%n", Sys.getVersion());
+		printWriter0.printf("OpenGL: %s version %s, %s%n", GL11.glGetString(GL11.GL_RENDERER), GL11.glGetString(GL11.GL_VERSION), GL11.glGetString(GL11.GL_VENDOR));
 	}
 
-	boolean isMinecraftThread() {
+	public boolean isMinecraftThread() {
 		return Thread.currentThread() == this.mcThread;
 	}
 
-	static final int version(int i0, int i1, int i2, int i3) {
-		return (i0 & 255) << 24 | (i1 & 255) << 16 | (i2 & 255) << 8 | (i3 & 255) << 0;
-	}
-
-	int getWorldHeight() {
-		return this.worldHeight;
+	public int getWorldHeight() {
+		return theWorld.getHeight();
 	}
 
 	private int[] getColor(String string1) {
 		InputStream inputStream2 = null;
-		int[] i3 = null;
+		int[] i3;
 
 		label73: {
 			int[] i6;
@@ -3366,19 +3190,19 @@ public class ReiMinimap implements Runnable {
 		return entity1 == this.thePlayer ? 0 : (entity1 instanceof PlayerEntity ? (this.visibleEntityPlayer ? -16711681 : 0) : (entity1 instanceof SquidEntity ? (this.visibleEntitySquid ? -16760704 : 0) : (entity1 instanceof AnimalEntity ? (this.visibleEntityAnimal ? -1 : 0) : (entity1 instanceof SlimeEntity ? (this.visibleEntitySlime ? -10444704 : 0) : (!(entity1 instanceof MonsterEntity) && !(entity1 instanceof GhastEntity) ? (entity1 instanceof LivingEntity ? (this.visibleEntityLiving ? -12533632 : 0) : 0) : (this.visibleEntityMob ? -65536 : 0))))));
 	}
 
-	boolean getMarker() {
+	public boolean getMarker() {
 		return this.marker & (this.markerIcon | this.markerLabel | this.markerDistance);
 	}
 
-	boolean getMarkerIcon() {
+	public boolean getMarkerIcon() {
 		return this.markerIcon;
 	}
 
-	boolean getMarkerLabel() {
+	public boolean getMarkerLabel() {
 		return this.markerLabel;
 	}
 
-	boolean getMarkerDistance() {
+	public boolean getMarkerDistance() {
 		return this.markerDistance;
 	}
 

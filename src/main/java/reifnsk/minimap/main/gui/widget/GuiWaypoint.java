@@ -1,10 +1,13 @@
-package reifnsk.minimap;
+package reifnsk.minimap.main.gui.widget;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import reifnsk.minimap.main.waypoint.Waypoint;
+import reifnsk.minimap.main.gui.screen.GuiWaypointEditorScreen;
+import reifnsk.minimap.main.gui.screen.GuiWaypointScreen;
 
-class GuiWaypoint extends ButtonWidget {
+public class GuiWaypoint extends ButtonWidget {
 	private static final int[] COLOR1 = new int[]{-1, -65536};
 	private static final int[] COLOR2 = new int[]{-4144960, -4194304};
 	private static final int COLOR_SIZE = 9;
@@ -29,12 +32,12 @@ class GuiWaypoint extends ButtonWidget {
 	private int bright;
 	private long clickTime = System.nanoTime();
 
-	GuiWaypoint(int i1, GuiWaypointScreen guiWaypointScreen2) {
+	public GuiWaypoint(int i1, GuiWaypointScreen guiWaypointScreen2) {
 		super(i1, 0, 0, 0, 0, (String)null);
 		this.gws = guiWaypointScreen2;
 	}
 
-	void setWaypoint(int i1, Waypoint waypoint2) {
+	public void setWaypoint(int i1, Waypoint waypoint2) {
 		this.number = i1;
 		this.waypoint = waypoint2;
 		this.name = null;
@@ -110,7 +113,7 @@ class GuiWaypoint extends ButtonWidget {
 		}
 	}
 
-	void bounds(int i1, int i2, int i3, int i4) {
+	public void bounds(int i1, int i2, int i3, int i4) {
 		this.x = i1;
 		this.y = i2;
 		this.width = i3;

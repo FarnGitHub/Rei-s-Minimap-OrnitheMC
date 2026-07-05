@@ -9,8 +9,8 @@ import net.modificationstation.stationapi.api.mod.entrypoint.Entrypoint;
 import net.modificationstation.stationapi.api.util.Namespace;
 import net.modificationstation.stationapi.api.util.Null;
 import org.apache.logging.log4j.Logger;
-import reifnsk.minimap.WaypointEntity;
-import reifnsk.minimap.WaypointEntityRender;
+import reifnsk.minimap.main.waypoint.WaypointEntity;
+import reifnsk.minimap.main.waypoint.WaypointEntityRender;
 
 
 public class ReiMinimapStationAPI {
@@ -25,14 +25,8 @@ public class ReiMinimapStationAPI {
 
     @EventListener
     public void addRenderer(EntityRendererRegisterEvent event) {
-        event.renderers.put(WaypointEntity.class, new WaypointEntityRender(Minecraft.INSTANCE));
-        if(FabricLoader.getInstance().isModLoaded("unitweaks")) {
-            try {
-                uniTweak = ModOptions.class.getDeclaredField("frontView") != null;
-            } catch (NoSuchFieldException e) {
-                uniTweak = false;
-            }
-        }
+        event.renderers.put(WaypointEntity.class, new WaypointEntityRender());
+        uniTweak = FabricLoader.getInstance().isModLoaded("unitweaks");
     }
 
 }

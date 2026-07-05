@@ -1,4 +1,4 @@
-package reifnsk.minimap;
+package reifnsk.minimap.main.gui.widget;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.font.TextRenderer;
