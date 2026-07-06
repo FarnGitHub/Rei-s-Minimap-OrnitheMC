@@ -2,6 +2,7 @@ package reifnsk.minimap.main.waypoint;
 
 import java.util.ArrayList;
 
+import net.danygames2014.unitweaks.UniTweaks;
 import net.danygames2014.unitweaks.util.ModOptions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.font.TextRenderer;
@@ -18,10 +19,14 @@ public class WaypointEntityRender extends EntityRenderer {
 	double far = 1.0D;
 	double _d = 1.0D;
 
+	public WaypointEntityRender() {
+		this.shadowRadius = 0.0F;
+	}
+
 	public void render(Entity ent, double x, double y, double z, float pitch, float yaw) {
 		ReiMinimap rm = ReiMinimap.instance;
-		this.far = (double)(512 >> Minecraft.INSTANCE.options.viewDistance) * 0.9D;
-		this._d = 1.0D / (double)(256 >> Minecraft.INSTANCE.options.viewDistance);
+		this.far = getMaxRenderDistance(2) * 0.9D;
+		this._d = 1.0D / getMaxRenderDistance(1);
 		double dmScale = rm.getVisibleDimensionScale();
 		ArrayList<ViewWaypoint> waypoints = new ArrayList<>();
 		if(rm.getMarker()) {
@@ -32,25 +37,38 @@ public class WaypointEntityRender extends EntityRenderer {
 
 			if(!waypoints.isEmpty()) {
 				waypoints.sort(null);
+				GL11.glDisable(GL11.GL_TEXTURE_2D);
 				GL11.glDisable(GL11.GL_LIGHTING);
 				GL11.glDisable(GL11.GL_FOG);
+				GL11.glDepthMask(false);
+				GL11.glEnable(GL11.GL_BLEND);
+				GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
 
                 for (ViewWaypoint waypoint : waypoints) {
                     this.draw(waypoint);
                 }
 
+				GL11.glDisable(GL11.GL_BLEND);
 				GL11.glEnable(GL11.GL_FOG);
 				GL11.glEnable(GL11.GL_LIGHTING);
-				this.shadowRadius = 0.0F;
+				GL11.glEnable(GL11.GL_TEXTURE_2D);
+				GL11.glDepthMask(true);
 			}
 		}
 	}
 
-	private static boolean isUniTweakThirdPersonView() {
+	private static boolean isThirdPerson() {
 		if(ReiMinimapStationAPI.uniTweak) {
 			return ModOptions.frontView;
 		}
 		return false;
+	}
+
+	public double getMaxRenderDistance(int multiplier) {
+		if(ReiMinimapStationAPI.uniTweak && UniTweaks.USER_INTERFACE_CONFIG.videoSettingsConfig.renderDistanceSlider) {
+			return ModOptions.getRenderDistanceChunks() * (16 * multiplier);
+		}
+		return (256 * multiplier) >> Minecraft.INSTANCE.options.viewDistance;
 	}
 
 	private void draw(ViewWaypoint waypoint) {
@@ -75,9 +93,12 @@ public class WaypointEntityRender extends EntityRenderer {
 		double scale = (waypoint.dl * 0.1D + 1.0D) * 0.02666666666666667D;
 		int markedTexCoord = rm.getMarkerIcon() ? -16 : 0;
 		GL11.glTranslated(waypoint.dx, waypoint.dy, waypoint.dz);
-		GL11.glRotatef(-(this.dispatcher.yaw + (isUniTweakThirdPersonView() ? 180.0F : 0F)), 0.0F, 1.0F, 0.0F);
-		GL11.glRotatef(isUniTweakThirdPersonView() ? -this.dispatcher.pitch: this.dispatcher.pitch, 1.0F, 0.0F, 0.0F);
+		GL11.glRotatef(-(this.dispatcher.yaw + (isThirdPerson() ? 180.0F : 0F)), 0.0F, 1.0F, 0.0F);
+		GL11.glRotatef(isThirdPerson() ? -this.dispatcher.pitch: this.dispatcher.pitch, 1.0F, 0.0F, 0.0F);
 		GL11.glScaled(-scale, -scale, scale);
+		GL11.glDisable(GL11.GL_LIGHTING);
+		GL11.glDisable(GL11.GL_FOG);
+		GL11.glDepthMask(false);
 		GL11.glEnable(GL11.GL_BLEND);
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		Tessellator tess = Tessellator.INSTANCE;
@@ -127,6 +148,10 @@ public class WaypointEntityRender extends EntityRenderer {
 			}
 		}
 
+		GL11.glEnable(GL11.GL_DEPTH_TEST);
+		GL11.glDepthMask(true);
+		GL11.glEnable(GL11.GL_FOG);
+		GL11.glEnable(GL11.GL_LIGHTING);
 		GL11.glDisable(GL11.GL_BLEND);
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 		GL11.glEnable(GL11.GL_TEXTURE_2D);
@@ -158,6 +183,10 @@ public class WaypointEntityRender extends EntityRenderer {
 
 		public int compareTo(ViewWaypoint waypoint) {
 			return Double.compare(waypoint.distance, this.distance);
+		}
+
+		private double clamp(double value, double min, double max) {
+			return Math.max(min, Math.min(max, value));
 		}
 
 	}
