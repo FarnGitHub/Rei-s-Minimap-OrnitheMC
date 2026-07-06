@@ -324,7 +324,7 @@ public class ReiMinimap implements Runnable {
 				this.isUpdateImage = false;
 				this.texture.unregister();
 				this.theWorld = this.theMinecraft.world;
-				this.theWorld.spawnEntity(new WaypointEntity(this.theMinecraft));
+				this.theWorld.spawnGlobalEntity(new WaypointEntity(this.theMinecraft));
 				this.multiplayer = this.thePlayer instanceof MultiplayerClientPlayerEntity;
 				if(this.theWorld != null) {
 					Environment.setWorld(this.theWorld);
@@ -584,7 +584,7 @@ public class ReiMinimap implements Runnable {
 			}
 
 			this.guiScreen = this.theMinecraft.currentScreen;
-			if(!this.enable || !checkGuiScreen(mc.currentScreen)) {
+			if(!this.enable || !validScreen(mc.currentScreen)) {
 				return;
 			}
 
@@ -859,8 +859,8 @@ public class ReiMinimap implements Runnable {
 				Chunk chunk10 = null;
 				Chunk chunk11;
 				Chunk chunk12;
-				Chunk chunk13 = null;
-				Chunk chunk14 = null;
+				Chunk chunk13;
+				Chunk chunk14;
 				if(this.undulate) {
 					chunk9 = this.getChunk(chunk1.world, chunk1.x, chunk1.z - 1);
 					chunk10 = this.getChunk(chunk1.world, chunk1.x, chunk1.z + 1);
@@ -873,11 +873,6 @@ public class ReiMinimap implements Runnable {
 					if(i16 >= 0) {
 						if(i16 >= 256) {
 							break;
-						}
-
-						if(this.undulate) {
-							chunk13 = i15 == 0 ? chunk9 : chunk1;
-							chunk14 = i15 == 15 ? chunk10 : chunk1;
 						}
 
 						for(int i17 = 0; i17 < 16; ++i17) {
@@ -912,9 +907,11 @@ public class ReiMinimap implements Runnable {
 								if(this.undulate) {
 									chunk11 = i17 == 0 ? chunk7 : chunk1;
 									chunk12 = i17 == 15 ? chunk8 : chunk1;
+                                    chunk13 = i15 == 0 ? chunk9 : chunk1;
+                                    chunk14 = i15 == 15 ? chunk10 : chunk1;
 									int i26 = chunk11.getHeight(i17 - 1 & 15, i15);
 									int i23 = chunk12.getHeight(i17 + 1 & 15, i15);
-									int i29 = chunk13.getHeight(i17, i15 - 1 & 15);
+                                    int i29 = chunk13.getHeight(i17, i15 - 1 & 15);
 									int i25 = chunk14.getHeight(i17, i15 + 1 & 15);
 									f21 += Math.max(-4.0F, Math.min(3.0F, (float)(i26 - i23) * this.sin + (float)(i29 - i25) * this.cos)) * 0.14142136F * 0.8F;
 								}
@@ -1132,10 +1129,10 @@ public class ReiMinimap implements Runnable {
 	}
 
 	private void surfaceCalc(Chunk chunk, int x, int y, int z, PixelColor pColor, TintType tint, Thread thread) {
-		int i8 = chunk.getBlockId(x, y, z);
-		if(i8 != 0 && (!this.hideSnow || i8 != 78)) {
-			int i9 = BlockColors.useMetadata(i8) ? chunk.getBlockMeta(x, y, z) : 0;
-			BlockColor blockColor = BlockColors.getBlockColor(i8, i9);
+		int id = chunk.getBlockId(x, y, z);
+		if(id != 0 && (!this.hideSnow || id != 78)) {
+			int meta = BlockColors.useMetadata(id) ? chunk.getBlockMeta(x, y, z) : 0;
+			BlockColor blockColor = BlockColors.getBlockColor(id, meta);
 			if(this.transparency) {
 				if(blockColor.alpha < 1.0F && y > 0) {
 					this.surfaceCalc(chunk, x, y - 1, z, pColor, blockColor.tintType, thread);
@@ -1148,15 +1145,14 @@ public class ReiMinimap implements Runnable {
 				return;
 			}
 
-			int i11;
 			if(this.lightType == 0) {
-                i11 = switch (this.lightmap) {
+                int i11 = switch (this.lightmap) {
                     case 3 -> 15;
                     case 0, 1, 2 -> y < this.getWorldHeight() ? chunk.getLight(LightType.SKY, x, y + 1, z) : 15;
                     default -> 0;
                 };
 
-				int i23 = Math.max(Block.BLOCKS_LIGHT_LUMINANCE[i8], chunk.getLight(LightType.BLOCK, x, y + 1, z));
+				int i23 = Math.max(Block.BLOCKS_LIGHT_LUMINANCE[id], chunk.getLight(LightType.BLOCK, x, y + 1, z));
 				int i26 = i11 << 4 | i23;
 				float f27 = this.lightmapRed[i26];
 				float f29 = this.lightmapGreen[i26];
@@ -1220,7 +1216,7 @@ public class ReiMinimap implements Runnable {
 
 				pColor.composite(blockColor.alpha, blockColor.red * f27, blockColor.green * f29, blockColor.blue * f30);
 			} else {
-                i11 = switch (this.lightmap) {
+				int i11 = switch (this.lightmap) {
                     case 1 -> y < this.getWorldHeight() ? chunk.getLight(x, y + 1, z, 0) : 15;
                     case 2 -> y < this.getWorldHeight() ? chunk.getLight(x, y + 1, z, 11) : 4;
                     case 3 -> 15;
@@ -3024,8 +3020,8 @@ public class ReiMinimap implements Runnable {
 		return string0 == null ? null : string0.replace(' ', '_').toUpperCase(Locale.ENGLISH);
 	}
 
-	private static boolean checkGuiScreen(Screen guiScreen0) {
-		return guiScreen0 == null || guiScreen0 instanceof GuiScreenInterface || guiScreen0 instanceof ChatScreen || guiScreen0 instanceof DeathScreen;
+	private static boolean validScreen(Screen screen) {
+		return screen == null || screen instanceof GuiScreenInterface || screen instanceof ChatScreen || screen instanceof DeathScreen;
 	}
 
 	public String getDimensionName(int i1) {

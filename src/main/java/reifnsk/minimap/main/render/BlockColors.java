@@ -486,7 +486,7 @@ public final class BlockColors {
         }
 
         textureColors = null;
-
+        System.gc();
     }
 
     private static void setTextureColor(int id, int meta, int color) {
@@ -595,14 +595,14 @@ public final class BlockColors {
         long g = 0L;
         long b = 0L;
 
-        for(int i21 = minY; i21 < maxY; ++i21) {
-            for(int i22 = minX; i22 < maxX; ++i22) {
-                int i23 = image.getRGB(i22, i21);
-                int i24 = i23 >> 24 & 255;
-                a += i24;
-                r += (i23 >> 16 & 255) * i24;
-                g += (i23 >> 8 & 255) * i24;
-                b += (i23 & 255) * i24;
+        for(int y = minY; y < maxY; ++y) {
+            for(int x = minX; x < maxX; ++x) {
+                int rgb = image.getRGB(x, y);
+                int aC = rgb >> 24 & 255;
+                a += aC;
+                r += (rgb >> 16 & 255) * aC;
+                g += (rgb >> 8 & 255) * aC;
+                b += (rgb & 255) * aC;
             }
         }
 

@@ -25,7 +25,6 @@ public class WaypointEntityRender extends EntityRenderer {
 		double dmScale = rm.getVisibleDimensionScale();
 		ArrayList<ViewWaypoint> waypoints = new ArrayList<>();
 		if(rm.getMarker()) {
-
             for (Waypoint wp : rm.getWaypoints()) {
                 if (wp.enable)
                     waypoints.add(new ViewWaypoint(wp, dmScale));

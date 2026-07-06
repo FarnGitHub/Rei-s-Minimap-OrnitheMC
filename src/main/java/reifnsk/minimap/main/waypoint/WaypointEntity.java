@@ -1,16 +1,20 @@
 package reifnsk.minimap.main.waypoint;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.util.math.Vec3d;
 
 public class WaypointEntity extends Entity {
 	private final Minecraft mc;
 
-	public WaypointEntity(Minecraft minecraft1) {
-		super(minecraft1.world);
-		this.mc = minecraft1;
+	public WaypointEntity(Minecraft mc) {
+		super(mc.world);
+		this.mc = mc;
 		this.ignoreFrustumCull = true;
+		this.isPersistent = true;
 		this.onUpdate();
 	}
 
@@ -27,6 +31,12 @@ public class WaypointEntity extends Entity {
 	protected void writeNbt(NbtCompound nBTTagCompound1) {
 	}
 
+	@Environment(EnvType.CLIENT)
+	public boolean shouldRender(Vec3d pos) {
+		return true;
+	}
+
+	@Environment(EnvType.CLIENT)
 	public boolean shouldRender(double distance) {
 		return true;
 	}
