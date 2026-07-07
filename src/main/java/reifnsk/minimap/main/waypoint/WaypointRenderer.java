@@ -4,29 +4,27 @@ import java.util.ArrayList;
 
 import net.danygames2014.unitweaks.UniTweaks;
 import net.danygames2014.unitweaks.util.ModOptions;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
-import net.minecraft.client.render.entity.EntityRenderer;
 
-import net.minecraft.entity.Entity;
 import org.lwjgl.opengl.GL11;
 import reifnsk.minimap.main.ReiMinimap;
-import reifnsk.minimap.stationapi.ReiMinimapStationAPI;
 
-public class WaypointEntityRender extends EntityRenderer {
-	double far = 1.0D;
-	double _d = 1.0D;
+public class WaypointRenderer {
+	private static double far = 1.0D;
+	private static double _d = 1.0D;
+	public static boolean uniTweak = FabricLoader.getInstance().isModLoaded("unitweaks");
 
-	public WaypointEntityRender() {
-		this.shadowRadius = 0.0F;
+	private WaypointRenderer() {
 	}
 
-	public void render(Entity ent, double x, double y, double z, float pitch, float yaw) {
+	public static void render() {
 		ReiMinimap rm = ReiMinimap.instance;
-		this.far = getMaxRenderDistance(2) * 0.9D;
-		this._d = 1.0D / getMaxRenderDistance(1);
+		far = getMaxRenderDistance(2) * 0.9D;
+		_d = 1.0D / getMaxRenderDistance(1);
 		double dmScale = rm.getVisibleDimensionScale();
 		ArrayList<ViewWaypoint> waypoints = new ArrayList<>();
 		if(rm.getMarker()) {
@@ -45,7 +43,7 @@ public class WaypointEntityRender extends EntityRenderer {
 				GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
 
                 for (ViewWaypoint waypoint : waypoints) {
-                    this.draw(waypoint);
+                    draw(waypoint);
                 }
 
 				GL11.glDisable(GL11.GL_BLEND);
@@ -57,24 +55,17 @@ public class WaypointEntityRender extends EntityRenderer {
 		}
 	}
 
-	private static boolean isThirdPerson() {
-		if(ReiMinimapStationAPI.uniTweak) {
-			return ModOptions.frontView;
-		}
-		return false;
-	}
-
-	public double getMaxRenderDistance(int multiplier) {
-		if(ReiMinimapStationAPI.uniTweak && UniTweaks.USER_INTERFACE_CONFIG.videoSettingsConfig.renderDistanceSlider) {
+	public static double getMaxRenderDistance(int multiplier) {
+		if(uniTweak && UniTweaks.USER_INTERFACE_CONFIG.videoSettingsConfig.renderDistanceSlider) {
 			return ModOptions.getRenderDistanceChunks() * (16 * multiplier);
 		}
 		return (256 * multiplier) >> Minecraft.INSTANCE.options.viewDistance;
 	}
 
-	private void draw(ViewWaypoint waypoint) {
+	private static void draw(ViewWaypoint waypoint) {
 		ReiMinimap rm = ReiMinimap.instance;
-		float distance = (float)Math.max(0.0D, 1.0D - waypoint.distance * this._d);
-		TextRenderer textRenderer = this.getTextRenderer();
+		float distance = (float)Math.max(0.0D, 1.0D - waypoint.distance * _d);
+		TextRenderer textRenderer = Minecraft.INSTANCE.textRenderer;
 		GL11.glPushMatrix();
 		StringBuilder builder = new StringBuilder();
 		if(rm.getMarkerLabel() && waypoint.name != null) {
@@ -93,8 +84,8 @@ public class WaypointEntityRender extends EntityRenderer {
 		double scale = (waypoint.dl * 0.1D + 1.0D) * 0.02666666666666667D;
 		int markedTexCoord = rm.getMarkerIcon() ? -16 : 0;
 		GL11.glTranslated(waypoint.dx, waypoint.dy, waypoint.dz);
-		GL11.glRotatef(-(this.dispatcher.yaw + (isThirdPerson() ? 180.0F : 0F)), 0.0F, 1.0F, 0.0F);
-		GL11.glRotatef(isThirdPerson() ? -this.dispatcher.pitch: this.dispatcher.pitch, 1.0F, 0.0F, 0.0F);
+		GL11.glRotatef(-EntityRenderDispatcher.INSTANCE.yaw, 0.0F, 1.0F, 0.0F);
+		GL11.glRotatef(EntityRenderDispatcher.INSTANCE.pitch, 1.0F, 0.0F, 0.0F);
 		GL11.glScaled(-scale, -scale, scale);
 		GL11.glDisable(GL11.GL_LIGHTING);
 		GL11.glDisable(GL11.GL_FOG);
@@ -158,7 +149,7 @@ public class WaypointEntityRender extends EntityRenderer {
 		GL11.glPopMatrix();
 	}
 
-	public class ViewWaypoint extends Waypoint implements Comparable<ViewWaypoint> {
+	public static class ViewWaypoint extends Waypoint implements Comparable<ViewWaypoint> {
 		double dx;
 		double dy;
 		double dz;
@@ -171,22 +162,18 @@ public class WaypointEntityRender extends EntityRenderer {
 			this.dy = (double)wp.y - EntityRenderDispatcher.offsetY + 0.5D;
 			this.dz = (double)wp.z * distance - EntityRenderDispatcher.offsetZ + 0.5D;
 			this.dl = this.distance = Math.sqrt(this.dx * this.dx + this.dy * this.dy + this.dz * this.dz);
-			if(this.dl > WaypointEntityRender.this.far) {
-				double d5 = WaypointEntityRender.this.far / this.dl;
-				this.dx *= d5;
-				this.dy *= d5;
-				this.dz *= d5;
-				this.dl = WaypointEntityRender.this.far;
+			if(this.dl > WaypointRenderer.far) {
+				double farLimit = WaypointRenderer.far / this.dl;
+				this.dx *= farLimit;
+				this.dy *= farLimit;
+				this.dz *= farLimit;
+				this.dl = WaypointRenderer.far;
 			}
 
 		}
 
 		public int compareTo(ViewWaypoint waypoint) {
 			return Double.compare(waypoint.distance, this.distance);
-		}
-
-		private double clamp(double value, double min, double max) {
-			return Math.max(min, Math.min(max, value));
 		}
 
 	}

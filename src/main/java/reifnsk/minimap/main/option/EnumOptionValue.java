@@ -59,9 +59,9 @@ public enum EnumOptionValue {
 	UPDATE_FOUND1(-1610547201, "Found!!"),
 	UPDATE_FOUND2(-1610612481, "Found!"),
 	UPDATE_NOT_FOUND(-1593901056, "Not Found"),
-	VERSION(-1610547456, "v3.0_01"),
-	AUTHOR(-1610547456, "ReiFNSK");
-
+	VERSION(-1610547456, ReiMinimap.getVersion()),
+	AUTHOR(-1610547456, "ReiFNSK"),
+	STAPI_AUTHOR(-1610547456, "farnfarn02");
 	public final int color;
 	private final String text;
 
@@ -70,8 +70,8 @@ public enum EnumOptionValue {
 		this.text = ReiMinimap.capitalize(this.name());
 	}
 
-	EnumOptionValue(int i3, String text) {
-		this.color = i3;
+	EnumOptionValue(int color, String text) {
+		this.color = color;
 		this.text = text;
 	}
 

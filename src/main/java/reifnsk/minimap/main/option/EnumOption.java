@@ -51,9 +51,12 @@ public enum EnumOption {
 	MARKER_LABEL("Label", 4, EnumOptionValue.ENABLE, EnumOptionValue.DISABLE),
 	MARKER_DISTANCE("Distance", 4, EnumOptionValue.ENABLE, EnumOptionValue.DISABLE),
 	ABOUT_VERSION("Version", 5, EnumOptionValue.VERSION),
-	ABOUT_AUTHER("Author", 5, EnumOptionValue.AUTHOR),
-	ENG_FORUM("Forum (en)", 5, EnumOptionValue.SUB_OPTION),
-	JP_FORUM("Forum (jp)", 5, EnumOptionValue.SUB_OPTION);
+	ABOUT_AUTHER("Original Author", 5, EnumOptionValue.AUTHOR),
+	ABOUT_STAPI_AUTHOR("STAPI Author", 5, EnumOptionValue.STAPI_AUTHOR),
+	MODRINTH_PAGE("Modrinth Page", 5, EnumOptionValue.SUB_OPTION),
+	GITHUB_PAGE("Github Page", 5, EnumOptionValue.SUB_OPTION),
+	ENG_FORUM("OG Forum (en, dead)", 5, EnumOptionValue.SUB_OPTION),
+	JP_FORUM("OG Forum (jp, dead)", 5, EnumOptionValue.SUB_OPTION);
 
 	public static final int maxPage;
 	private final String name;

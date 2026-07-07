@@ -1,8 +1,7 @@
 plugins {
     id 'maven-publish'
-    id 'fabric-loom' version '1.16.2'
+    id 'fabric-loom' version '1.17.12'
     id 'babric-loom-extension' version '1.16.1'
-    id "com.modrinth.minotaur" version "2.+"
 }
 
 version = property("mod_version")
@@ -136,30 +135,10 @@ dependencies {
         }
     }
 
-    if (project.hasProperty("accessoryapi_version")) {
-        modImplementation("maven.modrinth:accessory-api:${project.accessoryapi_version}") {
-            transitive = false
-        }
-    }
-
     if (project.hasProperty("whatsthis_version")) {
         modImplementation("net.danygames2014:WhatsThis:${project.whatsthis_version}") {
             transitive = false
         }
-    }
-
-    if (project.hasProperty("nyalib_version")) {
-        modImplementation("net.danygames2014:NyaLib:${project.nyalib_version}")
-    }
-
-    if (project.hasProperty("uniwrench_version")) {
-        modImplementation("net.danygames2014:UniWrench:${project.uniwrench_version}") {
-            transitive = false
-        }
-    }
-
-    if (project.hasProperty("debugutilities_version")) {
-        modImplementation("net.danygames2014:DebugUtilities:${project.debugutilities_version}")
     }
 
     if (project.hasProperty("retroauth_version")) {
@@ -199,10 +178,4 @@ tasks.withType(GenerateModuleMetadata).configureEach {
 // Gradle 9 fails the build if there are no tests, but we are using the test package for a test mod
 tasks.withType(Test).configureEach {
     failOnNoDiscoveredTests = false
-}
-
-jar {
-    from("LICENSE") {
-        rename { "${it}_" + base.archivesName.get() }
-    }
 }

@@ -18,7 +18,7 @@ public class GuiOptionScreen extends Screen implements GuiScreenInterface {
 	public static final int optionEntitiesRadar = 3;
 	public static final int optionMarker = 4;
 	public static final int aboutMinimap = 5;
-	private static final String[] TITLE_STRING = new String[]{"Rei\'s Minimap " + ReiMinimap.version, "Minimap Options", "SurfaceMap Options", "Entities Radar Options", "Marker Options", "About Rei\'s Minimap"};
+	private static final String[] TITLE_STRING = new String[]{"Rei's Minimap StationAPI " + ReiMinimap.version, "Minimap Options", "SurfaceMap Options", "Entities Radar Options", "Marker Options", "About Rei's Minimap"};
 	private int page;
 	private ArrayList buttonListRei = new ArrayList();
 	private GuiSimpleButton exitMenu;
@@ -99,23 +99,22 @@ public class GuiOptionScreen extends Screen implements GuiScreenInterface {
 		super.render(i1, i2, f3);
 	}
 
-	protected void buttonClicked(ButtonWidget guiButton1) {
-		if(guiButton1 instanceof GuiOptionButton) {
-			GuiOptionButton guiOptionButton2 = (GuiOptionButton)guiButton1;
-			ReiMinimap.instance.setOption(guiOptionButton2.getOption(), guiOptionButton2.getValue());
+	protected void buttonClicked(ButtonWidget button) {
+		if(button instanceof GuiOptionButton optionWidget) {
+			ReiMinimap.instance.setOption(optionWidget.getOption(), optionWidget.getValue());
 			ReiMinimap.instance.saveOptions();
 		}
 
-		if(guiButton1 instanceof GuiSimpleButton) {
-			if(guiButton1 == this.exitMenu) {
+		if(button instanceof GuiSimpleButton) {
+			if(button == this.exitMenu) {
 				this.minecraft.setScreen(this.page == 0 ? parent : new GuiOptionScreen(0));
 			}
 
-			if(guiButton1 == this.waypoint) {
+			if(button == this.waypoint) {
 				this.minecraft.setScreen(new GuiWaypointScreen(this));
 			}
 
-			if(guiButton1 == this.keyconfig) {
+			if(button == this.keyconfig) {
 				this.minecraft.setScreen(new GuiKeyConfigScreen());
 			}
 		}

@@ -21,6 +21,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 
@@ -67,12 +69,11 @@ import reifnsk.minimap.main.option.KeyInput;
 import reifnsk.minimap.main.cache.ChunkCache;
 import reifnsk.minimap.main.cache.Environment;
 import reifnsk.minimap.main.waypoint.Waypoint;
-import reifnsk.minimap.main.waypoint.WaypointEntity;
 
 @SuppressWarnings({"unused", "FieldMayBeFinal", "FieldCanBeLocal", "unchecked", "BusyWait", "ResultOfMethodCallIgnored", "CallToPrintStackTrace", "SameParameterValue"})
 public class ReiMinimap implements Runnable {
-	public static final String version = String.format("%s [%s]", "v3.0_01", "Beta 1.7.3");
-	public static final File directory = new File(Minecraft.getRunDirectory(), "mods" + File.separatorChar + "rei_minimap");
+	public static final String version = String.format("%s [%s]", getVersion(), "Beta 1.7.3");
+	public static final File directory = new File(FabricLoader.getInstance().getGameDir().toFile(), "mods" + File.separatorChar + "rei_minimap");
 	private float[] lightBrightnessTable = this.generateLightBrightnessTable(0.125F);
 	private static final int[] updateFrequencys = new int[]{2, 5, 10, 20, 40};
 	public static final ReiMinimap instance = new ReiMinimap();
@@ -208,6 +209,18 @@ public class ReiMinimap implements Runnable {
 	private float[] lightmapRed;
 	private float[] lightmapGreen;
 	private float[] lightmapBlue;
+	private static String versionFabric;
+
+	public static String getVersion() {
+		if(versionFabric == null) {
+			try {
+				versionFabric = FabricLoader.getInstance().getModContainer("rei_minimap").get().getMetadata().getVersion().getFriendlyString();
+			} catch (Exception e) {
+				versionFabric = "Unknown";
+			}
+		}
+		return versionFabric;
+	}
 
 	static {
 		ZOOM_LIST = new double[]{0.5D, 1.0D, 1.5D, 2.0D, 4.0D, 8.0D};
@@ -324,7 +337,6 @@ public class ReiMinimap implements Runnable {
 				this.isUpdateImage = false;
 				this.texture.unregister();
 				this.theWorld = this.theMinecraft.world;
-				this.theWorld.spawnGlobalEntity(new WaypointEntity(this.theMinecraft));
 				this.multiplayer = this.thePlayer instanceof MultiplayerClientPlayerEntity;
 				if(this.theWorld != null) {
 					Environment.setWorld(this.theWorld);
@@ -2616,6 +2628,14 @@ public class ReiMinimap implements Runnable {
 				case JP_FORUM:
 					try { Desktop.getDesktop().browse(new URI("http://forum.minecraftuser.jp/viewtopic.php?f=13&t=153")); }
 					catch (Exception e) { error("Open Forum(jp)", e); }
+					break;
+				case MODRINTH_PAGE:
+					try { Desktop.getDesktop().browse(new URI("https://modrinth.com/mod/reis-minimap-ornithe-port")); }
+					catch (Exception e) { error("Modrinth Page", e); }
+					break;
+				case GITHUB_PAGE:
+					try { Desktop.getDesktop().browse(new URI("https://github.com/FarnGitHub/Rei-s-Minimap-Fabric")); }
+					catch (Exception e) { error("Github Page", e); }
 					break;
 			}
 

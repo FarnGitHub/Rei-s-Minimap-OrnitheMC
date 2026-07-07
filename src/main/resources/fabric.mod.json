@@ -12,9 +12,6 @@
   "icon": "reifnsk/minimap/reitextures/icon.png",
   "environment": "client",
   "entrypoints": {
-    "stationapi:event_bus_client": [
-      "reifnsk.minimap.stationapi.ReiMinimapStationAPI"
-    ],
     "modmenu": [
       "reifnsk.minimap.modmenu.ModMenuLinker"
     ]
