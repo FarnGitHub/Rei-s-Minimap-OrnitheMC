@@ -545,7 +545,7 @@ public final class BlockColors {
         for(int meta = 0;meta < buffered.length; ++meta) {
             Sprite sprite = getSprite(block, meta);
             if(sprite == null) {
-                buffered[meta] = emptyImage();
+                buffered[meta] = singlePixelImage(block.material.mapColor.color);
             } else {
                 try {
                     NativeImage image = sprite.getContents().getBaseFrame();
@@ -560,16 +560,16 @@ public final class BlockColors {
                         }
                     }
                 } catch (Exception e) {
-                    buffered[meta] = emptyImage();
+                    buffered[meta] = singlePixelImage(block.material.mapColor.color);
                 }
             }
         }
         return buffered;
     }
 
-    private static BufferedImage emptyImage() {
+    private static BufferedImage singlePixelImage(int color) {
         BufferedImage buffered = GLTextureBufferedImage.create(1,1);
-        buffered.setRGB(0,0, 0x00000000);
+        buffered.setRGB(0,0, color);
         return buffered;
     }
 
