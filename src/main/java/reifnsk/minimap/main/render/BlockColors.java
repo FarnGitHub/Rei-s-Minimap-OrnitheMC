@@ -7,6 +7,9 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.material.Material;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.biome.source.BiomeSource;
+import net.modificationstation.stationapi.api.client.StationRenderAPI;
+import net.modificationstation.stationapi.api.client.render.model.BakedModel;
+import net.modificationstation.stationapi.api.client.render.model.VanillaBakedModel;
 import net.modificationstation.stationapi.api.client.texture.NativeImage;
 import net.modificationstation.stationapi.api.client.texture.Sprite;
 
@@ -247,7 +250,7 @@ public final class BlockColors {
 
     private static BlockColor getDefaultColor(int id, int meta) {
         int pointer = pointer(id, meta);
-        return pointer < defaultColors.length ? defaultColors[pointer] : AIR_BLOCK;
+        return pointer < defaultColors.length ? defaultColors[pointer] : null;
     }
 
     public static boolean useMetadata(int meta) {
@@ -331,6 +334,7 @@ public final class BlockColors {
 
                 for(int meta = 0; meta < 16; ++meta) {
                     try {
+                        if(buffer[meta] == null) continue;
                         boolean isTorch = block instanceof TorchBlock;
                         access.meta = meta;
                         block.updateBoundingBox(access, 0, 0, 0);
@@ -470,6 +474,13 @@ public final class BlockColors {
             } else if((baseColor = getDefaultColor(id, 0)) != null) {
                 targetPallette = defaultColors;
                 blockColors[id << 4] = baseColor;
+            } else {
+                Block block = Block.BLOCKS[id];
+                baseColor = block != null ? instance(block.material.mapColor.color) : AIR_BLOCK;
+                for(int meta = 1; meta < 16; ++meta) {
+                    blockColors[id << 4] = baseColor;
+                    useMetadata[id] = false;
+                }
             }
 
             if(targetPallette != null) {
@@ -545,7 +556,7 @@ public final class BlockColors {
         for(int meta = 0;meta < buffered.length; ++meta) {
             Sprite sprite = getSprite(block, meta);
             if(sprite == null) {
-                buffered[meta] = singlePixelImage(block.material.mapColor.color);
+                buffered[meta] = null;
             } else {
                 try {
                     NativeImage image = sprite.getContents().getBaseFrame();
@@ -560,7 +571,7 @@ public final class BlockColors {
                         }
                     }
                 } catch (Exception e) {
-                    buffered[meta] = singlePixelImage(block.material.mapColor.color);
+                    buffered[meta] = null;
                 }
             }
         }
@@ -578,6 +589,14 @@ public final class BlockColors {
     }
 
     public static Sprite getSprite(Block block, int meta) {
+        try {
+            BakedModel baked = StationRenderAPI.getBakedModelManager().getBlockModels().getModel(block.getDefaultState());
+            if(!(baked instanceof VanillaBakedModel) && baked.getSprite() != StationRenderAPI.getBakedModelManager().getMissingModel().getSprite()) {
+                return baked.getSprite();
+            }
+        } catch (Exception ignored) {
+        }
+
         try {
             return block.getAtlas().getTexture(block.getTexture(1, meta)).getSprite();
         } catch (Exception e) {
