@@ -1,0 +1,100 @@
+plugins {
+	id 'maven-publish'
+	id 'fabric-loom' version '1.17-SNAPSHOT'
+	id 'ploceus' version '1.17-SNAPSHOT'
+}
+
+base {
+	archivesName = project.archives_base_name
+}
+version = project.version
+group = project.maven_group
+
+loom {
+	if (project.hasProperty("accesswidener_name") && project.accesswidener_name.length() > 0) {
+		accessWidenerPath = file("src/main/resources/${project.accesswidener_name}.accesswidener")
+	}
+}
+
+ploceus {
+	setIntermediaryGeneration(2)
+}
+
+repositories {
+	// Add repositories to retrieve artifacts from in here.
+	// You should only use this when depending on other mods because
+	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
+	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
+	// for more information about repositories.
+	maven { url = "https://matthewperiut.github.io/repository" }
+	maven { name = 'Glass Releases'; url = "https://maven.glass-launcher.net/releases" }
+	maven {
+		name = "Modrinth"
+		url = "https://api.modrinth.com/maven"
+	}
+	maven { name = 'Jitpack'; url = 'https://jitpack.io' }
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:b1.7.3"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	clientExceptions ploceus.raven(project.client_raven_build, 'client')
+	serverExceptions ploceus.raven(project.server_raven_build, 'server')
+	clientSignatures ploceus.sparrow(project.client_sparrow_build, 'client')
+	serverSignatures ploceus.sparrow(project.server_sparrow_build, 'server')
+	clientNests "net.glasslauncher:biny-nests:b1.7.3-client+build.${project.client_nests_build}"
+	serverNests "net.glasslauncher:biny-nests:b1.7.3-server+build.${project.server_nests_build}"
+	mappings ploceus.mappings("net.glasslauncher:biny-ornithe:b1.7.3+build.${project.biny_mappings}:mergedv2")
+
+	modImplementation "com.terraformersmc:modmenu:0.5.0+mcb1.7.3"
+	compileOnlyApi "maven.modrinth:unitweaks:0.29.0-b1.7.3"
+	modCompileOnlyApi("net.modificationstation:StationAPI:2.0.0-alpha.6.2+gen2") {
+		transitive = true;
+		exclude group: "com.github.mineLdiver", module: "UnsafeEvents"
+	}
+
+}
+
+processResources {
+	inputs.property 'version', version
+
+	filesMatching('fabric.mod.json') {
+		expand 'version': version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.encoding = 'UTF-8'
+	it.options.release = 8
+}
+
+java {
+	// Still required by IDEs such as Eclipse and Visual Studio Code
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+// If you plan to use a different file for the license, don't forget to change the file name here!
+jar {
+	from('LICENSE') {
+		rename { "${it}_${base.archivesName.get()}" }
+	}
+}
+
+// Configure the maven publication
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+		}
+	}
+
+	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+	repositories {
+		// Add repositories to publish to here.
+		// Notice: This block does NOT have the same function as the block in the top level.
+		// The repositories here will be used for publishing your artifact, not for
+		// retrieving dependencies.
+	}
+}
