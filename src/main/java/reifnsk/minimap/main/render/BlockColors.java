@@ -49,7 +49,6 @@ public final class BlockColors {
         textureColors = new BlockColor[BLOCK_NUM * 16 + 1];
         Arrays.fill(textureColors, AIR_BLOCK);
         TempBlockAccess access = new TempBlockAccess();
-		CompatHelper.GET.refreshTerrain();
 
         for(int blockId = 0; blockId < BLOCK_NUM; ++blockId) {
             Block block = Block.BLOCKS[blockId];
